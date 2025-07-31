@@ -1,0 +1,73 @@
+[
+  {
+    "num": "35",
+    "question": "Welcher deutsche Staat hatte eine schwarz-rot-goldene Flagge mit Hammer, Zirkel und Ährenkranz?",
+    "a": "DDR",
+    "b": "Drittes Reich",
+    "c": "Preußen",
+    "d": "Bundesrepublik Deutschland",
+    "solution": "a",
+    "image": "https://foreignvasi.com/q35.e7713f5f.png",
+    "translation": {
+      "en": {
+        "question": "Which German state had a black-red-gold flag with hammer, compass and wreath of wheat?",
+        "a": "DDR",
+        "b": "Third Reich",
+        "c": "Prussia",
+        "d": "Federal Republic of Germany",
+        "context": "The question refers to the flag of the German Democratic Republic (GDR), which existed from 1949 to 1990. This flag had the traditional German colors of black-red-gold, but with an additional emblem. In the middle were a hammer and compass, surrounded by a wreath of wheat, which was supposed to symbolize the working class and intellectual creation. The GDR was a socialist state and the part of Germany that emerged under Soviet influence after World War II, until reunification with the Federal Republic of Germany in 1990."
+      },
+      "tr": {
+        "question": "Hangi Alman devletinde çekiç, pusula ve buğday çelengi olan siyah-kırmızı-altın bir bayrak vardı?",
+        "a": "DDR",
+        "b": "Üçüncü Reich",
+        "c": "Prusya",
+        "d": "Federal Almanya Cumhuriyeti",
+        "context": "Soru, 1949'dan 1990'a kadar var olan Alman Demokratik Cumhuriyeti'nin (GDR) bayrağına atıfta bulunuyor. Bu bayrak, geleneksel Alman siyah-kırmızı-altın renklerine sahipti, ancak ek bir amblem vardı. Ortada, işçi sınıfını ve entelektüel yaratımı simgelemesi gereken bir buğday çelengi ile çevrili bir çekiç ve pusula vardı. Doğu Almanya, sosyalist bir devletti ve II. Dünya Savaşı'ndan sonra 1990'da Federal Almanya Cumhuriyeti ile yeniden birleşene kadar Sovyet etkisi altında ortaya çıkan Almanya'nın bir parçasıydı."
+      },
+      "ru": {
+        "question": "В каком немецком государстве был черно-красно-золотой флаг с молотком, циркулем и венком из пшеницы?",
+        "a": "РДР",
+        "b": "Третий рейх",
+        "c": "Пруссия",
+        "d": "Федеративная Республика Германия",
+        "context": "Речь идет о флаге Германской Демократической Республики (ГДР), который существовал с 1949 по 1990 год. Этот флаг имел традиционные немецкие цвета черно-красно-золотой, но с дополнительной эмблемой. В центре находились молоток и циркуль, окруженные венком из пшеницы, который должен был символизировать рабочий класс и интеллектуальное творчество. ГДР была социалистическим государством и частью Германии, которая возникла под советским влиянием после Второй мировой войны, вплоть до воссоединения с Федеративной Республикой Германия в 1990 году."
+      },
+      "fr": {
+        "question": "Quel État allemand avait un drapeau noir-rouge-or avec un marteau, une boussole et une couronne de blé ?",
+        "a": "DDR",
+        "b": "Troisième Reich",
+        "c": "Prusse",
+        "d": "République fédérale d’Allemagne",
+        "context": "La question porte sur le drapeau de la République démocratique allemande (RDA), qui a existé de 1949 à 1990. Ce drapeau avait les couleurs allemandes traditionnelles noir-rouge-or, mais avec un emblème supplémentaire. Au milieu se trouvaient un marteau et une boussole, entourés d’une couronne de blé, qui était censée symboliser la classe ouvrière et la création intellectuelle. La RDA était un État socialiste et la partie de l’Allemagne qui a émergé sous l’influence soviétique après la Seconde Guerre mondiale, jusqu’à la réunification avec la République fédérale d’Allemagne en 1990."
+      },
+      "ar": {
+        "question": "أي دولة ألمانية كان لديها علم أسود أحمر ذهبي مع مطرقة وبوصلة وإكليل من القمح؟",
+        "a": "الادماج",
+        "b": "الرايخ الثالث",
+        "c": "بروسيا",
+        "d": "جمهورية ألمانيا الاتحادية",
+        "context": "يشير السؤال إلى علم جمهورية ألمانيا الديمقراطية (GDR) ، الذي كان موجودا من عام 1949 إلى عام 1990. كان لهذا العلم الألوان الألمانية التقليدية من الأسود والأحمر والذهبي ، ولكن مع شعار إضافي. في المنتصف كانت هناك مطرقة وبوصلة ، محاطة بإكليل من القمح ، والذي كان من المفترض أن يرمز إلى الطبقة العاملة والإبداع الفكري. كانت جمهورية ألمانيا الديمقراطية دولة اشتراكية وجزءا من ألمانيا ظهر تحت النفوذ السوفيتي بعد الحرب العالمية الثانية ، حتى إعادة توحيدها مع جمهورية ألمانيا الاتحادية في عام 1990."
+      },
+      "uk": {
+        "question": "У якій німецькій державі був чорно-червоно-золотий прапор з молотом, циркулем і вінком з пшениці?",
+        "a": "ДДР",
+        "b": "Третій Рейх",
+        "c": "Пруссія",
+        "d": "Федеративна Республіка Німеччина",
+        "context": "Йдеться про прапор Німецької Демократичної Республіки (НДР), який існував з 1949 по 1990 рік. Цей прапор мав традиційні німецькі кольори чорний-червоно-золотий, але з додатковою емблемою. Посередині знаходилися молот і циркуль, оточені вінком з пшениці, який повинен був символізувати робітничий клас і інтелектуальну творчість. НДР була соціалістичною державою і частиною Німеччини, яка виникла під радянським впливом після Другої світової війни, до возз'єднання з Федеративною Республікою Німеччина в 1990 році."
+      },
+      "hi": {
+        "question": "किस जर्मन राज्य में हथौड़ा, कम्पास और गेहूं की माला के साथ काले-लाल-सोने का झंडा था?",
+        "a": "डीडीआर",
+        "b": "तीसरा रैह",
+        "c": "प्रशिया",
+        "d": "जर्मनी का संघीय गणतंत्र",
+        "context": "प्रश्न जर्मन डेमोक्रेटिक रिपब्लिक (GDR) के ध्वज को संदर्भित करता है, जो 1949 से 1990 तक अस्तित्व में था। इस ध्वज में काले-लाल-सोने के पारंपरिक जर्मन रंग थे, लेकिन एक अतिरिक्त प्रतीक के साथ। बीच में एक हथौड़ा और कम्पास थे, जो गेहूं की एक माला से घिरा हुआ था, जिसे श्रमिक वर्ग और बौद्धिक सृजन का प्रतीक माना जाता था। जीडीआर एक समाजवादी राज्य था और जर्मनी का वह हिस्सा था जो द्वितीय विश्व युद्ध के बाद सोवियत प्रभाव में उभरा, जब तक कि 1990 में जर्मनी के संघीय गणराज्य के साथ पुनर्मिलन नहीं हुआ।"
+      }
+    },
+    "category": "History & Geography",
+    "context": "Die Frage bezieht sich auf die Flagge der Deutschen Demokratischen Republik (DDR), die von 1949 bis 1990 existierte. Diese Flagge hatte die traditionellen deutschen Farben schwarz-rot-gold, jedoch mit einem zusätzlichen Emblem. In der Mitte befanden sich Hammer und Zirkel, umgeben von einem Ährenkranz, welches die Arbeiterklasse und das intellektuelle Schaffen symbolisieren sollte. Die DDR war ein sozialistischer Staat und der Teil Deutschlands, der unter sowjetischem Einfluss nach dem Zweiten Weltkrieg entstand, bis zur Wiedervereinigung mit der Bundesrepublik Deutschland im Jahr 1990.",
+    "id": "c125c8ebe0afbb790a5da66189558b0a61d27df2f3d89b5dff9d57478128580b"
+  }
+]
