@@ -25,7 +25,7 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const [language, setLanguageState] = useState<Language>('en');
+  const [language, setLanguageState] = useState<Language>('de');
   const [inlineToggle, setInlineToggle] = useState(false);
 
   useEffect(() => {

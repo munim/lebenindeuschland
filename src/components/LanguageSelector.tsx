@@ -5,6 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { Language } from '@/types/question';
 
 const LANGUAGE_OPTIONS: { value: Language; label: string }[] = [
+  { value: 'de', label: 'Deutsch' },
   { value: 'en', label: 'English' },
   { value: 'tr', label: 'Türkçe' },
 ];

@@ -23,12 +23,12 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
   onToggle, 
   isToggled 
 }) => {
-  const { language } = useLanguage();
-  
   const getDisplayText = () => {
-    if (isToggled && language !== 'de' && translatedText) {
+    // If toggled and we have a translation, show it
+    if (isToggled && translatedText) {
       return translatedText;
     }
+    // Otherwise show the German text
     return text;
   };
 
@@ -48,7 +48,7 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
               ? 'bg-green-500 text-white'
               : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
           }`}>
-            {index + 1}
+            {String.fromCharCode(65 + index)}
           </span>
           <span className="transition-all duration-300 transform">
             {getDisplayText()}
@@ -85,9 +85,13 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   const [imageLoaded, setImageLoaded] = useState(false);
   const [isTransitioning, setIsTransitioning] = useState(false);
 
-  const translation = question.translation[language];
+  const translation = question.translation?.[language];
 
-  // Shuffle answers on component mount
+  // Debug logging
+  console.log('Current language:', language);
+  console.log('Available translations:', Object.keys(question.translation || {}));
+  console.log('Translation for current language:', translation);
+
   useEffect(() => {
     setIsTransitioning(true);
     
@@ -98,20 +102,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       { key: 'd', text: question.d, translatedText: translation?.d, isCorrect: question.solution === 'd' },
     ];
     
-    // Fisher-Yates shuffle
     const shuffled = [...options];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
-    // Reset states for new question
     setQuestionToggled(false);
     setAnswerToggles({});
     setInfoToggled(false);
     setImageLoaded(false);
     
-    // Small delay to allow smooth transition
     setTimeout(() => {
       setShuffledOptions(shuffled);
       setIsTransitioning(false);
@@ -119,9 +120,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   }, [question, translation]);
 
   const getQuestionDisplayText = () => {
-    if (questionToggled && language !== 'de' && translation?.question) {
+    // If toggled and we have a translation, show it
+    if (questionToggled && translation?.question) {
       return translation.question;
     }
+    // Otherwise show the German text
     return question.question;
   };
 

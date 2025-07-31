@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  compress: true,
+  poweredByHeader: false,
+  trailingSlash: false,
 };
 
 export default nextConfig;

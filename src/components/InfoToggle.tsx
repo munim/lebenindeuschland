@@ -20,9 +20,11 @@ export const InfoToggle: React.FC<InfoToggleProps> = ({
   const { language } = useLanguage();
 
   const getDisplayText = () => {
-    if (isContentToggled && language !== 'de' && translatedContext) {
+    // If toggled and we have a translation, show it
+    if (isContentToggled && translatedContext) {
       return translatedContext;
     }
+    // Otherwise show the German text
     return germanContext;
   };
 

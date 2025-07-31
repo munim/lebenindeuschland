@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build",
+    "build": "npm run build:data && next build",
+    "build:data": "node scripts/generate-static-data.js",
     "start": "next start",
     "lint": "next lint"
   },
