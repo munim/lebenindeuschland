@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useLanguage } from '@/contexts/LanguageContext';
 
 interface InfoToggleProps {
   germanContext: string;
@@ -17,7 +16,6 @@ export const InfoToggle: React.FC<InfoToggleProps> = ({
   isContentToggled = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { language } = useLanguage();
 
   const getDisplayText = () => {
     // If toggled and we have a translation, show it

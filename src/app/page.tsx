@@ -1,39 +1,56 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Question, QuestionsResponse } from '@/types/question';
+import React, { useEffect, useRef } from 'react';
 import { QuestionCard } from '@/components/QuestionCard';
-import { Pagination } from '@/components/Pagination';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Footer } from '@/components/Footer';
-import { fetchQuestions } from '@/lib/api';
+import { useQuestionCache } from '@/lib/useQuestionCache';
+import { useSwipe } from '@/lib/useSwipe';
 
 export default function Home() {
-  const [questionsData, setQuestionsData] = useState<QuestionsResponse | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const {
+    currentQuestion,
+    currentQuestionIndex,
+    totalQuestions,
+    loading,
+    error,
+    goToNext,
+    goToPrevious,
+    hasNext,
+    hasPrevious,
+  } = useQuestionCache();
+
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const swipeHandlers = useSwipe({
+    onSwipeLeft: () => {
+      if (hasNext && !loading) {
+        goToNext();
+      }
+    },
+    onSwipeRight: () => {
+      if (hasPrevious && !loading) {
+        goToPrevious();
+      }
+    },
+    threshold: 50
+  });
 
   useEffect(() => {
-    const loadQuestions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        // Always load German for the main page to get translations
-        const data = await fetchQuestions('de', currentPage);
-        setQuestionsData(data);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load questions');
-      } finally {
-        setLoading(false);
-      }
+    const container = containerRef.current;
+    if (!container) return;
+
+    container.addEventListener('touchstart', swipeHandlers.onTouchStart);
+    container.addEventListener('touchend', swipeHandlers.onTouchEnd);
+
+    return () => {
+      container.removeEventListener('touchstart', swipeHandlers.onTouchStart);
+      container.removeEventListener('touchend', swipeHandlers.onTouchEnd);
     };
+  }, [swipeHandlers]);
 
-    loadQuestions();
-  }, [currentPage]);
-
-  if (loading) {
+  if (loading && !currentQuestion) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-gray-600 dark:text-gray-400">Loading questions...</div>
@@ -70,33 +87,57 @@ export default function Home() {
             <p className="text-gray-600 dark:text-gray-400">
               Here you can find all questions and answers for the &apos;Life in Germany&apos; test
             </p>
-            {questionsData && (
-              <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                Page {questionsData.pagination.page} of {questionsData.pagination.totalPages} 
-                ({questionsData.pagination.totalQuestions} total questions)
-              </p>
+            <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+              Question {currentQuestionIndex + 1} of {totalQuestions}
+            </p>
+          </div>
+
+          {/* Question Display with Stable Container */}
+          <div ref={containerRef} className="relative min-h-[600px] touch-pan-y">
+            {currentQuestion && (
+              <div className="w-full">
+                <QuestionCard
+                  question={currentQuestion}
+                  questionNumber={parseInt(currentQuestion.num)}
+                />
+              </div>
             )}
           </div>
 
-          <div className="space-y-6">
-            {questionsData?.questions.map((question: Question) => (
-              <QuestionCard
-                key={`question-${question.id}`}
-                question={question}
-                questionNumber={parseInt(question.num)}
-              />
-            ))}
+          {/* Custom Pagination Controls */}
+          <div className="mt-8 flex items-center justify-between">
+            <button
+              onClick={goToPrevious}
+              disabled={!hasPrevious || loading}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                hasPrevious && !loading
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              ← Previous
+            </button>
+
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-600 dark:text-gray-400">
+                Question {currentQuestionIndex + 1} of {totalQuestions}
+              </span>
+            </div>
+
+            <button
+              onClick={goToNext}
+              disabled={!hasNext || loading}
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
+                hasNext && !loading
+                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              }`}
+            >
+              Next →
+            </button>
           </div>
 
-          {questionsData && (
-            <Pagination
-              currentPage={questionsData.pagination.page}
-              totalPages={questionsData.pagination.totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-
-          {!questionsData?.questions.length && !loading && (
+          {!currentQuestion && !loading && (
             <div className="text-center py-12">
               <p className="text-gray-600 dark:text-gray-400">
                 No questions available. Please check your data configuration.

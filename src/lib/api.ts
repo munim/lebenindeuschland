@@ -1,12 +1,10 @@
 import { QuestionsResponse, CategoriesResponse, CategoryResponse, Language } from '@/types/question';
 
-const DATA_BASE_URL = '/data';
-
 export async function fetchQuestions(
   language: Language = 'de',
   page: number = 1
 ): Promise<QuestionsResponse> {
-  const response = await fetch(`${DATA_BASE_URL}/${language}/questions/page-${page}.json`);
+  const response = await fetch(`/data/${language}/questions/page-${page}.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch questions: ${response.status}`);
   }
@@ -14,7 +12,7 @@ export async function fetchQuestions(
 }
 
 export async function fetchCategories(language: Language = 'de'): Promise<CategoriesResponse> {
-  const response = await fetch(`${DATA_BASE_URL}/${language}/categories.json`);
+  const response = await fetch(`/data/${language}/categories.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch categories: ${response.status}`);
   }
@@ -26,7 +24,7 @@ export async function fetchCategoryQuestions(
   language: Language = 'de',
   page: number = 1
 ): Promise<CategoryResponse> {
-  const response = await fetch(`${DATA_BASE_URL}/${language}/${categoryId}/page-${page}.json`);
+  const response = await fetch(`/data/${language}/${categoryId}/page-${page}.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch category questions: ${response.status}`);
   }
@@ -34,7 +32,7 @@ export async function fetchCategoryQuestions(
 }
 
 export async function fetchMetadata() {
-  const response = await fetch(`${DATA_BASE_URL}/metadata.json`);
+  const response = await fetch(`/data/metadata.json`);
   if (!response.ok) {
     throw new Error(`Failed to fetch metadata: ${response.status}`);
   }

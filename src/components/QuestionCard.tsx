@@ -11,7 +11,11 @@ interface AnswerOptionProps {
   translatedText?: string;
   isCorrect: boolean;
   index: number;
-  onToggle: () => void;
+  onToggle: {
+    onTouchStart: (e: React.TouchEvent) => void;
+    onTouchEnd: (e: React.TouchEvent) => void;
+    onClick: (e: React.MouseEvent) => void;
+  };
   isToggled: boolean;
 }
 
@@ -34,8 +38,10 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
 
   return (
     <button
-      onClick={onToggle}
-      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] ${
+      onClick={onToggle.onClick}
+      onTouchStart={onToggle.onTouchStart}
+      onTouchEnd={onToggle.onTouchEnd}
+      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none ${
         isCorrect
           ? 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-800 dark:text-green-200'
           : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
@@ -83,18 +89,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   const [infoToggled, setInfoToggled] = useState(false);
   const [shuffledOptions, setShuffledOptions] = useState<ShuffledOption[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const translation = question.translation?.[language];
 
-  // Debug logging
-  console.log('Current language:', language);
-  console.log('Available translations:', Object.keys(question.translation || {}));
-  console.log('Translation for current language:', translation);
-
   useEffect(() => {
-    setIsTransitioning(true);
-    
     const options: ShuffledOption[] = [
       { key: 'a', text: question.a, translatedText: translation?.a, isCorrect: question.solution === 'a' },
       { key: 'b', text: question.b, translatedText: translation?.b, isCorrect: question.solution === 'b' },
@@ -108,28 +106,25 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
+    // Reset states immediately without delay
     setQuestionToggled(false);
     setAnswerToggles({});
     setInfoToggled(false);
     setImageLoaded(false);
-    
-    setTimeout(() => {
-      setShuffledOptions(shuffled);
-      setIsTransitioning(false);
-    }, 50);
+    setShuffledOptions(shuffled);
   }, [question, translation]);
 
   const getQuestionDisplayText = () => {
+    console.log('Question toggle state:', questionToggled);
+    console.log('Current language:', language);
+    console.log('Available translation:', translation?.question);
+    
     // If toggled and we have a translation, show it
     if (questionToggled && translation?.question) {
       return translation.question;
     }
     // Otherwise show the German text
     return question.question;
-  };
-
-  const handleQuestionToggle = () => {
-    setQuestionToggled(!questionToggled);
   };
 
   const handleAnswerToggle = (optionKey: string) => {
@@ -139,18 +134,46 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     }));
   };
 
+  const handleQuestionToggle = () => {
+    setQuestionToggled(!questionToggled);
+  };
+
+  // Prevent double firing on mobile (both touch and click events)
+  const createSafeToggleHandler = (toggleFn: () => void) => {
+    let touchStarted = false;
+    
+    return {
+      onTouchStart: (e: React.TouchEvent) => {
+        touchStarted = true;
+        e.preventDefault(); // Prevent text selection
+      },
+      onTouchEnd: (e: React.TouchEvent) => {
+        if (touchStarted) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleFn();
+          touchStarted = false;
+        }
+      },
+      onClick: () => {
+        if (!touchStarted) {
+          // Only handle click if it wasn't a touch event
+          toggleFn();
+        }
+      }
+    };
+  };
+
   const handleInfoToggle = () => {
     setInfoToggled(!infoToggled);
   };
 
   return (
-    <div className={`bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm transition-opacity duration-200 ${
-      isTransitioning ? 'opacity-50' : 'opacity-100'
-    }`}>
+    <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       <div className="mb-4">
         <button
-          onClick={handleQuestionToggle}
-          className="text-left w-full hover:text-blue-600 dark:hover:text-blue-400 transition-colors group"
+          {...createSafeToggleHandler(handleQuestionToggle)}
+          className="text-left w-full hover:text-blue-600 dark:hover:text-blue-400 transition-colors group select-none"
         >
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Question {questionNumber}
@@ -185,7 +208,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
             translatedText={option.translatedText}
             isCorrect={option.isCorrect}
             index={index}
-            onToggle={() => handleAnswerToggle(option.key)}
+            onToggle={createSafeToggleHandler(() => handleAnswerToggle(option.key))}
             isToggled={answerToggles[option.key] || false}
           />
         ))}
