@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Question } from '@/types/question';
-import { fetchQuestions } from '@/lib/api';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Question, FilterState } from '@/types/question';
+import { fetchQuestions, fetchCategoryQuestions, fetchStateQuestions } from '@/lib/api';
 
 interface QuestionCache {
   [key: number]: Question[];
 }
 
 const STORAGE_KEY = 'current-question-index';
+const FILTER_STORAGE_KEY = 'question-filters';
 
 export const useQuestionCache = () => {
   const [cache, setCache] = useState<QuestionCache>({});
@@ -16,17 +17,42 @@ export const useQuestionCache = () => {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
   const [loadingPages, setLoadingPages] = useState<Set<number>>(new Set());
+  const [filters, setFilters] = useState<FilterState>({ category: null, state: null });
+  
+  // Use refs to avoid stale closures
+  const cacheRef = useRef(cache);
+  const loadingPagesRef = useRef(loadingPages);
+  
+  // Update refs when state changes
+  useEffect(() => {
+    cacheRef.current = cache;
+  }, [cache]);
+  
+  useEffect(() => {
+    loadingPagesRef.current = loadingPages;
+  }, [loadingPages]);
 
-  // Load saved question index from localStorage on mount
+  // Load saved question index and filters from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const index = parseInt(saved, 10);
+      const savedIndex = localStorage.getItem(STORAGE_KEY);
+      if (savedIndex) {
+        const index = parseInt(savedIndex, 10);
         if (!isNaN(index) && index >= 0) {
           setCurrentQuestionIndex(index);
         }
       }
+      
+      const savedFilters = localStorage.getItem(FILTER_STORAGE_KEY);
+      if (savedFilters) {
+        try {
+          const parsedFilters = JSON.parse(savedFilters);
+          setFilters(parsedFilters);
+        } catch {
+          // Ignore invalid saved filters
+        }
+      }
+      
       setIsInitialized(true);
     }
   }, []);
@@ -38,29 +64,49 @@ export const useQuestionCache = () => {
     }
   }, [currentQuestionIndex, isInitialized]);
 
+  // Save filters to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized) {
+      localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify(filters));
+    }
+  }, [filters, isInitialized]);
+
   // Calculate which page contains the current question
   const getPageForQuestion = (questionIndex: number) => Math.floor(questionIndex / 20) + 1;
 
-  // Preload adjacent pages for smooth navigation
+  // Get the appropriate fetch function based on filters
+  const getFetchFunction = useCallback(() => {
+    if (filters.state) {
+      return (page: number) => fetchStateQuestions(filters.state!, 'de', page);
+    } else if (filters.category) {
+      return (page: number) => fetchCategoryQuestions(filters.category!, 'de', page);
+    } else {
+      return (page: number) => fetchQuestions('de', page);
+    }
+  }, [filters]);
+
+  // Stable preload function without cache/loadingPages dependencies
   const preloadPages = useCallback(async (centerPage: number) => {
     // Only run on client side
     if (typeof window === 'undefined') {
       return;
     }
     
+    const fetchFn = getFetchFunction();
     const pagesToLoad = [centerPage - 1, centerPage, centerPage + 1].filter(p => p > 0);
     
     for (const page of pagesToLoad) {
-      // Skip if already cached or currently loading
-      if (cache[page] || loadingPages.has(page)) {
+      // Check current cache and loading state using refs
+      if (cacheRef.current[page] || loadingPagesRef.current.has(page)) {
         continue;
       }
       
       try {
-        // Mark as loading to prevent duplicate requests
+        // Mark as loading
         setLoadingPages(prev => new Set(prev.add(page)));
         
-        const response = await fetchQuestions('de', page);
+        const response = await fetchFn(page);
+        
         setCache(prev => ({
           ...prev,
           [page]: response.questions
@@ -78,7 +124,6 @@ export const useQuestionCache = () => {
         });
       } catch (err) {
         console.error(`Failed to load page ${page}:`, err);
-        // Remove from loading set on error too
         setLoadingPages(prev => {
           const next = new Set(prev);
           next.delete(page);
@@ -86,7 +131,7 @@ export const useQuestionCache = () => {
         });
       }
     }
-  }, []); // Remove cache dependency to prevent recreation
+  }, [getFetchFunction]);
 
   // Get current question from cache
   const getCurrentQuestion = useCallback((): Question | null => {
@@ -122,6 +167,14 @@ export const useQuestionCache = () => {
     goToQuestion(currentQuestionIndex - 1);
   }, [currentQuestionIndex, goToQuestion]);
 
+  // Update filters and reset to first question
+  const updateFilters = useCallback((newFilters: FilterState) => {
+    setFilters(newFilters);
+    setCurrentQuestionIndex(0); // Reset to first question
+    setCache({}); // Clear cache since we're switching datasets
+    setTotalQuestions(0);
+  }, []);
+
   // Initialize - load first few pages or the page containing saved question
   useEffect(() => {
     const initializeCache = async () => {
@@ -136,7 +189,18 @@ export const useQuestionCache = () => {
         // Determine which page to load based on current question index
         const targetPage = getPageForQuestion(currentQuestionIndex);
         
-        await preloadPages(targetPage);
+        // Get the latest fetch function directly
+        const fetchFn = filters.state 
+          ? (page: number) => fetchStateQuestions(filters.state!, 'de', page)
+          : filters.category 
+          ? (page: number) => fetchCategoryQuestions(filters.category!, 'de', page)
+          : (page: number) => fetchQuestions('de', page);
+        
+        // Load initial page directly without preloadPages dependency
+        const response = await fetchFn(targetPage);
+        setCache({ [targetPage]: response.questions });
+        setTotalQuestions(response.pagination.totalQuestions);
+        
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load questions');
@@ -145,15 +209,19 @@ export const useQuestionCache = () => {
     };
 
     initializeCache();
-  }, [isInitialized]); // Only depend on isInitialized to run once
+  }, [isInitialized, currentQuestionIndex, filters]);
 
-  // Load pages when currentQuestionIndex changes (after initialization)
+  // Clear cache and reload when filters change
   useEffect(() => {
-    if (isInitialized && !loading) {
-      const targetPage = getPageForQuestion(currentQuestionIndex);
-      preloadPages(targetPage);
+    if (isInitialized) {
+      setCache({});
+      setCurrentQuestionIndex(0);
+      setTotalQuestions(0);
+      
+      // Reset loading state for filter changes  
+      setLoading(true);
     }
-  }, [currentQuestionIndex, isInitialized, loading]);
+  }, [filters, isInitialized]);
 
   return {
     currentQuestion: getCurrentQuestion(),
@@ -166,5 +234,7 @@ export const useQuestionCache = () => {
     goToQuestion,
     hasNext: currentQuestionIndex < totalQuestions - 1,
     hasPrevious: currentQuestionIndex > 0,
+    filters,
+    updateFilters,
   };
 };

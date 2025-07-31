@@ -71,6 +71,34 @@ export interface CategoriesResponse {
   language: Language;
 }
 
+export interface StateInfo {
+  code: string;
+  name: string;
+  count: number;
+}
+
+export interface StatesResponse {
+  states: StateInfo[];
+  total: number;
+  language: Language;
+}
+
+export interface StateResponse {
+  questions: Question[];
+  state: {
+    code: string;
+    name: string;
+    total: number;
+  };
+  pagination: Pagination;
+  language: Language;
+}
+
+export interface FilterState {
+  category: string | null;
+  state: string | null;
+}
+
 export type Language = 'de' | 'en' | 'tr';
 
 export interface AppConfig {
