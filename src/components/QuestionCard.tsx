@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Question } from '@/types/question';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -87,13 +87,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   const [questionToggled, setQuestionToggled] = useState(false);
   const [answerToggles, setAnswerToggles] = useState<Record<string, boolean>>({});
   const [infoToggled, setInfoToggled] = useState(false);
-  const [shuffledOptions, setShuffledOptions] = useState<ShuffledOption[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const translation = question.translation?.[language];
 
-  useEffect(() => {
+  const shuffledOptions = useMemo(() => {
     const options: ShuffledOption[] = [
       { key: 'a', text: question.a, translatedText: translation?.a, isCorrect: question.solution === 'a' },
       { key: 'b', text: question.b, translatedText: translation?.b, isCorrect: question.solution === 'b' },
@@ -107,13 +106,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
     
-    // Reset states immediately without delay
+    return shuffled;
+  }, [question, translation]);
+
+  useEffect(() => {
     setQuestionToggled(false);
     setAnswerToggles({});
     setInfoToggled(false);
     setImageError(false);
-    // Don't reset imageLoaded here - let it be handled by the image component
-    setShuffledOptions(shuffled);
   }, [question, translation]);
 
   // Handle image loading state when image URL changes
