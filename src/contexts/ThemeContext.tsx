@@ -36,12 +36,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.classList.remove('light', 'dark');
+    document.documentElement.classList.add(theme);
     localStorage.setItem('theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    setTheme(newTheme);
   };
 
   return (
