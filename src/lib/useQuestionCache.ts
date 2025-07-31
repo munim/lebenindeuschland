@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Question, FilterState } from '@/types/question';
-import { fetchQuestions, fetchCategoryQuestions, fetchStateQuestions } from '@/lib/api';
+import { fetchAllQuestions, fetchCategoryQuestions, fetchStateQuestions, fetchStateCategoryQuestions } from '@/lib/api';
 
 interface QuestionCache {
   [key: number]: Question[];
@@ -76,12 +76,18 @@ export const useQuestionCache = () => {
 
   // Get the appropriate fetch function based on filters
   const getFetchFunction = useCallback(() => {
-    if (filters.state) {
+    if (filters.state && filters.category) {
+      // Both state and category selected: fetch state data and filter by category
+      return (page: number) => fetchStateCategoryQuestions(filters.state!, filters.category!, 'de', page);
+    } else if (filters.state) {
+      // Only state selected: base questions + state-specific questions
       return (page: number) => fetchStateQuestions(filters.state!, 'de', page);
     } else if (filters.category) {
+      // Only category selected: category questions from base set only
       return (page: number) => fetchCategoryQuestions(filters.category!, 'de', page);
     } else {
-      return (page: number) => fetchQuestions('de', page);
+      // No filters: all base questions
+      return (page: number) => fetchAllQuestions('de', page);
     }
   }, [filters]);
 
@@ -189,14 +195,16 @@ export const useQuestionCache = () => {
         // Determine which page to load based on current question index
         const targetPage = getPageForQuestion(currentQuestionIndex);
         
-        // Get the latest fetch function directly
-        const fetchFn = filters.state 
+        // Get the correct fetch function based on current filters
+        const fetchFn = filters.state && filters.category
+          ? (page: number) => fetchStateCategoryQuestions(filters.state!, filters.category!, 'de', page)
+          : filters.state 
           ? (page: number) => fetchStateQuestions(filters.state!, 'de', page)
           : filters.category 
           ? (page: number) => fetchCategoryQuestions(filters.category!, 'de', page)
-          : (page: number) => fetchQuestions('de', page);
+          : (page: number) => fetchAllQuestions('de', page);
         
-        // Load initial page directly without preloadPages dependency
+        // Load initial page directly
         const response = await fetchFn(targetPage);
         setCache({ [targetPage]: response.questions });
         setTotalQuestions(response.pagination.totalQuestions);
