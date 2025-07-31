@@ -89,6 +89,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   const [infoToggled, setInfoToggled] = useState(false);
   const [shuffledOptions, setShuffledOptions] = useState<ShuffledOption[]>([]);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const translation = question.translation?.[language];
 
@@ -110,9 +111,28 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     setQuestionToggled(false);
     setAnswerToggles({});
     setInfoToggled(false);
-    setImageLoaded(false);
+    setImageError(false);
+    // Don't reset imageLoaded here - let it be handled by the image component
     setShuffledOptions(shuffled);
   }, [question, translation]);
+
+  // Handle image loading state when image URL changes
+  useEffect(() => {
+    if (question.image && question.image !== '-') {
+      // Reset image states when image URL changes
+      setImageLoaded(false);
+      setImageError(false);
+      
+      // Check if image is already cached by creating a new Image object
+      const img = document.createElement('img');
+      img.onload = () => setImageLoaded(true);
+      img.onerror = () => setImageError(true);
+      img.src = question.image;
+    } else {
+      setImageLoaded(false);
+      setImageError(false);
+    }
+  }, [question.image]);
 
   const getQuestionDisplayText = () => {
     console.log('Question toggle state:', questionToggled);
@@ -186,17 +206,34 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
 
       {question.image && question.image !== '-' && (
         <div className="mb-4">
-          <Image
-            src={question.image}
-            alt={`Question ${questionNumber} illustration`}
-            className={`max-w-full h-auto rounded-lg transition-opacity duration-300 ${
-              imageLoaded ? 'opacity-100' : 'opacity-0'
-            }`}
-            width={800}
-            height={600}
-            onLoad={() => setImageLoaded(true)}
-            onError={() => setImageLoaded(false)}
-          />
+          {!imageError ? (
+            <Image
+              src={question.image}
+              alt={`Question ${questionNumber} illustration`}
+              className={`max-w-full h-auto rounded-lg transition-opacity duration-300 ${
+                imageLoaded ? 'opacity-100' : 'opacity-0'
+              }`}
+              width={800}
+              height={600}
+              onLoad={() => {
+                setImageLoaded(true);
+                setImageError(false);
+              }}
+              onError={() => {
+                console.error('Failed to load image:', question.image);
+                setImageError(true);
+                setImageLoaded(false);
+              }}
+              unoptimized
+              priority
+            />
+          ) : (
+            <div className="w-full h-48 bg-gray-200 dark:bg-gray-700 rounded-lg flex items-center justify-center">
+              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                Image failed to load
+              </span>
+            </div>
+          )}
         </div>
       )}
 

@@ -6,12 +6,37 @@ interface QuestionCache {
   [key: number]: Question[];
 }
 
+const STORAGE_KEY = 'current-question-index';
+
 export const useQuestionCache = () => {
   const [cache, setCache] = useState<QuestionCache>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [totalQuestions, setTotalQuestions] = useState(0);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [loadingPages, setLoadingPages] = useState<Set<number>>(new Set());
+
+  // Load saved question index from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const index = parseInt(saved, 10);
+        if (!isNaN(index) && index >= 0) {
+          setCurrentQuestionIndex(index);
+        }
+      }
+      setIsInitialized(true);
+    }
+  }, []);
+
+  // Save current question index to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined' && isInitialized && currentQuestionIndex >= 0) {
+      localStorage.setItem(STORAGE_KEY, currentQuestionIndex.toString());
+    }
+  }, [currentQuestionIndex, isInitialized]);
 
   // Calculate which page contains the current question
   const getPageForQuestion = (questionIndex: number) => Math.floor(questionIndex / 20) + 1;
@@ -26,55 +51,67 @@ export const useQuestionCache = () => {
     const pagesToLoad = [centerPage - 1, centerPage, centerPage + 1].filter(p => p > 0);
     
     for (const page of pagesToLoad) {
-      if (!cache[page]) {
-        try {
-          const response = await fetchQuestions('de', page);
-          setCache(prev => ({
-            ...prev,
-            [page]: response.questions
-          }));
-          
-          if (page === 1) {
-            setTotalQuestions(response.pagination.totalQuestions);
-          }
-        } catch (err) {
-          console.error(`Failed to load page ${page}:`, err);
+      // Skip if already cached or currently loading
+      if (cache[page] || loadingPages.has(page)) {
+        continue;
+      }
+      
+      try {
+        // Mark as loading to prevent duplicate requests
+        setLoadingPages(prev => new Set(prev.add(page)));
+        
+        const response = await fetchQuestions('de', page);
+        setCache(prev => ({
+          ...prev,
+          [page]: response.questions
+        }));
+        
+        if (page === 1) {
+          setTotalQuestions(response.pagination.totalQuestions);
         }
+        
+        // Remove from loading set
+        setLoadingPages(prev => {
+          const next = new Set(prev);
+          next.delete(page);
+          return next;
+        });
+      } catch (err) {
+        console.error(`Failed to load page ${page}:`, err);
+        // Remove from loading set on error too
+        setLoadingPages(prev => {
+          const next = new Set(prev);
+          next.delete(page);
+          return next;
+        });
       }
     }
-  }, [cache]);
+  }, []); // Remove cache dependency to prevent recreation
 
   // Get current question from cache
   const getCurrentQuestion = useCallback((): Question | null => {
     const pageNumber = getPageForQuestion(currentQuestionIndex);
     const pageQuestions = cache[pageNumber];
     if (!pageQuestions) {
-      // If question not in cache, trigger loading but don't block UI
-      preloadPages(pageNumber);
-      return null;
+      return null; // Don't trigger loading here to avoid render loops
     }
     
     const indexInPage = currentQuestionIndex % 20;
     return pageQuestions[indexInPage] || null;
-  }, [cache, currentQuestionIndex, preloadPages]);
+  }, [cache, currentQuestionIndex]);
 
   // Navigate to specific question
   const goToQuestion = useCallback(async (questionIndex: number) => {
-    if (questionIndex < 0 || questionIndex >= totalQuestions) return;
+    if (questionIndex < 0 || (totalQuestions > 0 && questionIndex >= totalQuestions)) return;
     
     // Update immediately for instant UI response
     setCurrentQuestionIndex(questionIndex);
     
     const targetPage = getPageForQuestion(questionIndex);
     
-    // If we don't have the target page, load it in background
-    if (!cache[targetPage]) {
-      preloadPages(targetPage);
-    } else {
-      // Preload adjacent pages in background
-      preloadPages(targetPage);
-    }
-  }, [cache, totalQuestions, preloadPages]);
+    // Always preload adjacent pages in background
+    preloadPages(targetPage);
+  }, [totalQuestions, preloadPages]);
 
   // Navigation helpers
   const goToNext = useCallback(() => {
@@ -85,17 +122,21 @@ export const useQuestionCache = () => {
     goToQuestion(currentQuestionIndex - 1);
   }, [currentQuestionIndex, goToQuestion]);
 
-  // Initialize - load first few pages
+  // Initialize - load first few pages or the page containing saved question
   useEffect(() => {
     const initializeCache = async () => {
-      // Only run on client side after mount
-      if (typeof window === 'undefined') {
+      // Only run on client side after mount and after localStorage is loaded
+      if (typeof window === 'undefined' || !isInitialized) {
         return;
       }
       
       try {
         setLoading(true);
-        await preloadPages(1);
+        
+        // Determine which page to load based on current question index
+        const targetPage = getPageForQuestion(currentQuestionIndex);
+        
+        await preloadPages(targetPage);
         setLoading(false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load questions');
@@ -104,7 +145,15 @@ export const useQuestionCache = () => {
     };
 
     initializeCache();
-  }, [preloadPages]);
+  }, [isInitialized]); // Only depend on isInitialized to run once
+
+  // Load pages when currentQuestionIndex changes (after initialization)
+  useEffect(() => {
+    if (isInitialized && !loading) {
+      const targetPage = getPageForQuestion(currentQuestionIndex);
+      preloadPages(targetPage);
+    }
+  }, [currentQuestionIndex, isInitialized, loading]);
 
   return {
     currentQuestion: getCurrentQuestion(),
