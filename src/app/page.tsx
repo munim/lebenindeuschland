@@ -158,7 +158,7 @@ export default function Home() {
           </div>
 
           {/* Question Display with Stable Container */}
-          <div ref={containerRef} className="relative min-h-[600px] touch-pan-y">
+          <div ref={containerRef} className="relative touch-pan-y">
             {currentQuestion && (
               <div className="w-full">
                 <QuestionCard
