@@ -4,6 +4,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Image from 'next/image';
 import { Question } from '@/types/question';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTestMode } from '@/contexts/TestModeContext';
 import { InfoToggle } from './InfoToggle';
 
 interface AnswerOptionProps {
@@ -17,6 +18,9 @@ interface AnswerOptionProps {
     onClick: (e: React.MouseEvent) => void;
   };
   isToggled: boolean;
+  isTestMode: boolean;
+  isSelected?: boolean;
+  showFeedback?: boolean;
 }
 
 const AnswerOption: React.FC<AnswerOptionProps> = ({ 
@@ -25,10 +29,17 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
   isCorrect, 
   index, 
   onToggle, 
-  isToggled 
+  isToggled,
+  isTestMode,
+  isSelected = false,
+  showFeedback = false
 }) => {
   const getDisplayText = () => {
-    // If toggled and we have a translation, show it
+    // In test mode, always show German text
+    if (isTestMode) {
+      return text;
+    }
+    // In study mode, if toggled and we have a translation, show it
     if (isToggled && translatedText) {
       return translatedText;
     }
@@ -36,33 +47,86 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
     return text;
   };
 
+  const getButtonStyles = () => {
+    if (isTestMode) {
+      // Test mode styling
+      if (showFeedback) {
+        if (isSelected && isCorrect) {
+          // Selected correct answer
+          return 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-800 dark:text-green-200';
+        } else if (isSelected && !isCorrect) {
+          // Selected wrong answer
+          return 'bg-red-100 dark:bg-red-900/30 border-red-500 text-red-800 dark:text-red-200';
+        } else if (!isSelected && isCorrect) {
+          // Correct answer when user selected wrong
+          return 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-800 dark:text-green-200';
+        }
+      } else if (isSelected) {
+        // Selected but no feedback yet
+        return 'bg-blue-100 dark:bg-blue-900/30 border-blue-500 text-blue-800 dark:text-blue-200';
+      }
+      // Default test mode style
+      return 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100';
+    } else {
+      // Study mode styling (original)
+      return isCorrect
+        ? 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-800 dark:text-green-200'
+        : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100';
+    }
+  };
+
+  const getIndicatorStyles = () => {
+    if (isTestMode && showFeedback) {
+      if (isSelected && isCorrect) {
+        return 'bg-green-500 text-white';
+      } else if (isSelected && !isCorrect) {
+        return 'bg-red-500 text-white';
+      } else if (!isSelected && isCorrect) {
+        return 'bg-green-500 text-white';
+      }
+    } else if (isTestMode && isSelected) {
+      return 'bg-blue-500 text-white';
+    } else if (!isTestMode && isCorrect) {
+      return 'bg-green-500 text-white';
+    }
+    return 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300';
+  };
+
+  const showCheckmark = () => {
+    if (isTestMode && showFeedback) {
+      return (isSelected && isCorrect) || (!isSelected && isCorrect);
+    }
+    return !isTestMode && isCorrect;
+  };
+
+  const showXmark = () => {
+    return isTestMode && showFeedback && isSelected && !isCorrect;
+  };
+
   return (
     <button
       onClick={onToggle.onClick}
       onTouchStart={onToggle.onTouchStart}
       onTouchEnd={onToggle.onTouchEnd}
-      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none ${
-        isCorrect
-          ? 'bg-green-100 dark:bg-green-900/30 border-green-500 text-green-800 dark:text-green-200'
-          : 'bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
-      }`}
+      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none ${getButtonStyles()}`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${
-            isCorrect
-              ? 'bg-green-500 text-white'
-              : 'bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-300'
-          }`}>
+          <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${getIndicatorStyles()}`}>
             {String.fromCharCode(65 + index)}
           </span>
           <span className="transition-all duration-300 transform">
             {getDisplayText()}
           </span>
         </div>
-        {isCorrect && (
+        {showCheckmark() && (
           <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+          </svg>
+        )}
+        {showXmark() && (
+          <svg className="w-5 h-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         )}
       </div>
@@ -81,11 +145,14 @@ interface QuestionCardProps {
 
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNumber }) => {
   const { language } = useLanguage();
+  const { isTestMode } = useTestMode();
   const [questionToggled, setQuestionToggled] = useState(false);
   const [answerToggles, setAnswerToggles] = useState<Record<string, boolean>>({});
   const [infoToggled, setInfoToggled] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   const translation = question.translation?.[language];
 
@@ -117,6 +184,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     setAnswerToggles({});
     setInfoToggled(false);
     setImageError(false);
+    setSelectedAnswer(null);
+    setShowFeedback(false);
   }, [question, translation]);
 
   // Handle image loading state when image URL changes
@@ -138,6 +207,11 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   }, [question.image]);
 
   const getQuestionDisplayText = () => {
+    // In test mode, always show German text
+    if (isTestMode) {
+      return question.question;
+    }
+    
     console.log('Question toggle state:', questionToggled);
     console.log('Current language:', language);
     console.log('Available translation:', translation?.question);
@@ -151,14 +225,24 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   };
 
   const handleAnswerToggle = (optionKey: string) => {
-    setAnswerToggles(prev => ({
-      ...prev,
-      [optionKey]: !prev[optionKey]
-    }));
+    if (isTestMode) {
+      // Test mode: select answer and show feedback
+      setSelectedAnswer(optionKey);
+      setShowFeedback(true);
+    } else {
+      // Study mode: toggle translation
+      setAnswerToggles(prev => ({
+        ...prev,
+        [optionKey]: !prev[optionKey]
+      }));
+    }
   };
 
   const handleQuestionToggle = () => {
-    setQuestionToggled(!questionToggled);
+    // Only allow question toggle in study mode
+    if (!isTestMode) {
+      setQuestionToggled(!questionToggled);
+    }
   };
 
   // Prevent double firing on mobile (both touch and click events)
@@ -196,12 +280,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       <div className="mb-4">
         <button
           {...createSafeToggleHandler(handleQuestionToggle)}
-          className="text-left w-full hover:text-blue-600 dark:hover:text-blue-400 transition-colors group select-none"
+          className={`text-left w-full transition-colors group select-none ${
+            isTestMode ? '' : 'hover:text-blue-600 dark:hover:text-blue-400'
+          }`}
         >
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             Question {questionNumber}
           </h3>
-          <p className="text-gray-800 dark:text-gray-200 transition-all duration-300 transform group-hover:scale-[1.01]">
+          <p className={`text-gray-800 dark:text-gray-200 transition-all duration-300 transform ${
+            isTestMode ? '' : 'group-hover:scale-[1.01]'
+          }`}>
             {getQuestionDisplayText()}
           </p>
         </button>
@@ -250,6 +338,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
             index={index}
             onToggle={createSafeToggleHandler(() => handleAnswerToggle(option.key))}
             isToggled={answerToggles[option.key] || false}
+            isTestMode={isTestMode}
+            isSelected={selectedAnswer === option.key}
+            showFeedback={showFeedback}
           />
         ))}
       </div>

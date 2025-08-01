@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React from 'react';
 
 interface PaginationProps {
   currentPage: number;
@@ -13,19 +13,7 @@ export const Pagination: React.FC<PaginationProps> = ({
   totalPages, 
   onPageChange 
 }) => {
-  useEffect(() => {
-    const savedPage = localStorage.getItem('current-page');
-    if (savedPage) {
-      const pageNum = parseInt(savedPage, 10);
-      if (pageNum >= 1 && pageNum <= totalPages) {
-        onPageChange(pageNum);
-      }
-    }
-  }, [totalPages, onPageChange]);
-
-  useEffect(() => {
-    localStorage.setItem('current-page', currentPage.toString());
-  }, [currentPage]);
+  
 
   const handlePrevious = () => {
     if (currentPage > 1) {
@@ -48,11 +36,11 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={handlePrevious}
         disabled={currentPage === 1}
-        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
+        className="flex items-center justify-center w-10 h-10 rounded-full font-medium text-white transition-colors duration-200 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:text-gray-500 disabled:dark:text-gray-400 disabled:cursor-not-allowed"
         aria-label="Previous page"
       >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
       </button>
 
@@ -71,11 +59,11 @@ export const Pagination: React.FC<PaginationProps> = ({
       <button
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className="flex items-center justify-center w-10 h-10 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-300 dark:hover:border-blue-600 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 shadow-sm hover:shadow-md"
+        className="flex items-center justify-center w-10 h-10 rounded-full font-medium text-white transition-colors duration-200 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:dark:bg-gray-700 disabled:text-gray-500 disabled:dark:text-gray-400 disabled:cursor-not-allowed"
         aria-label="Next page"
       >
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
       </button>
     </div>

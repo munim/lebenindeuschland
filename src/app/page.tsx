@@ -4,11 +4,13 @@ import React, { useEffect, useRef } from 'react';
 import { QuestionCard } from '@/components/QuestionCard';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { TestModeToggle } from '@/components/TestModeToggle';
 import { CategorySelector } from '@/components/CategorySelector';
 import { StateSelector } from '@/components/StateSelector';
 import { Footer } from '@/components/Footer';
 import { useQuestionCache } from '@/lib/useQuestionCache';
 import { useSwipe } from '@/lib/useSwipe';
+import { Pagination } from '@/components/Pagination';
 
 export default function Home() {
   const {
@@ -19,6 +21,7 @@ export default function Home() {
     error,
     goToNext,
     goToPrevious,
+    goToQuestion,
     hasNext,
     hasPrevious,
     filters,
@@ -105,6 +108,7 @@ export default function Home() {
                 Leben In Deutschland
               </h1>
               <div className="flex items-center space-x-4">
+                <TestModeToggle />
                 <LanguageSelector />
                 <ThemeToggle />
               </div>
@@ -172,38 +176,12 @@ export default function Home() {
             )}
           </div>
 
-          {/* Custom Pagination Controls */}
-          <div className="mt-8 flex items-center justify-between">
-            <button
-              onClick={goToPrevious}
-              disabled={!hasPrevious || loading}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                hasPrevious && !loading
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              ← Previous
-            </button>
-
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-600 dark:text-gray-400">
-                Question {currentQuestionIndex + 1} of {totalQuestions}
-              </span>
-            </div>
-
-            <button
-              onClick={goToNext}
-              disabled={!hasNext || loading}
-              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
-                hasNext && !loading
-                  ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                  : 'bg-gray-300 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-              }`}
-            >
-              Next →
-            </button>
-          </div>
+          {/* Pagination */}
+          <Pagination
+            currentPage={currentQuestionIndex + 1}
+            totalPages={totalQuestions}
+            onPageChange={(page) => goToQuestion(page - 1)}
+          />
 
           {!currentQuestion && !loading && (
             <div className="text-center py-12">
