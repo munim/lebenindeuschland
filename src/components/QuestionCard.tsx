@@ -22,6 +22,7 @@ interface AnswerOptionProps {
   isTestMode: boolean;
   isSelected?: boolean;
   showFeedback?: boolean;
+  testModeContentToggled?: boolean;
 }
 
 const AnswerOption: React.FC<AnswerOptionProps> = ({ 
@@ -33,11 +34,15 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
   isToggled,
   isTestMode,
   isSelected = false,
-  showFeedback = false
+  showFeedback = false,
+  testModeContentToggled = false
 }) => {
   const getDisplayText = () => {
-    // In test mode, always show German text
+    // In test mode, show translation if toggled and answer has been selected
     if (isTestMode) {
+      if (testModeContentToggled && showFeedback && translatedText) {
+        return translatedText;
+      }
       return text;
     }
     // In study mode, if toggled and we have a translation, show it
@@ -156,6 +161,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   const [imageError, setImageError] = useState(false);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [testModeContentToggled, setTestModeContentToggled] = useState(false);
 
   const translation = question.translation?.[language];
 
@@ -176,11 +182,17 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   });
 
   const optionsWithTranslations = useMemo(() => {
-    return shuffledOptions.map(option => ({
-      ...option,
-      translatedText: translation?.[option.key as AnswerKey]
-    }));
-  }, [shuffledOptions, translation]);
+    return shuffledOptions.map(option => {
+      // For test mode translations, use the currently selected language
+      const selectedLangTranslation = question.translation?.[language]?.[option.key as AnswerKey];
+      const fallbackTranslation = question.translation?.en?.[option.key as AnswerKey];
+      
+      return {
+        ...option,
+        translatedText: selectedLangTranslation || fallbackTranslation
+      };
+    });
+  }, [shuffledOptions, language, question.translation]);
 
   useEffect(() => {
     setQuestionToggled(false);
@@ -189,6 +201,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     setImageError(false);
     setSelectedAnswer(null);
     setShowFeedback(false);
+    setTestModeContentToggled(false);
   }, [question, translation]);
 
   const handleAnswerToggle = useCallback((optionKey: string) => {
@@ -250,8 +263,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
   }, [question.image]);
 
   const getQuestionDisplayText = () => {
-    // In test mode, always show German text
+    // In test mode, show translation if toggled and answer has been selected
     if (isTestMode) {
+      if (testModeContentToggled && showFeedback && question.translation) {
+        // Use the currently selected language for translation
+        const selectedLangTranslation = question.translation[language]?.question;
+        const fallbackTranslation = question.translation.en?.question;
+        return selectedLangTranslation || fallbackTranslation || question.question;
+      }
       return question.question;
     }
     
@@ -328,18 +347,40 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     setInfoToggled(!infoToggled);
   };
 
+  const handleTestModeContentToggle = () => {
+    if (isTestMode && showFeedback) {
+      setTestModeContentToggled(!testModeContentToggled);
+    }
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+            Question {questionNumber}
+          </h3>
+          <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
+            {isTestMode && showFeedback && question.translation && Object.keys(question.translation).length > 0 && language !== 'de' && (
+              <button
+                {...createSafeToggleHandler(handleTestModeContentToggle)}
+                className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                title={testModeContentToggled ? "Show German text" : "Show translation"}
+                aria-label={testModeContentToggled ? "Show German text" : "Show translation"}
+              >
+                <svg className="w-5 h-5 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
         <button
           {...createSafeToggleHandler(handleQuestionToggle)}
           className={`text-left w-full transition-colors group select-none ${
             isTestMode ? '' : 'hover:text-blue-600 dark:hover:text-blue-400'
           }`}
         >
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            Question {questionNumber}
-          </h3>
           <p className={`text-gray-800 dark:text-gray-200 transition-all duration-300 transform ${
             isTestMode ? '' : 'group-hover:scale-[1.01]'
           }`}>
@@ -394,15 +435,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
             isTestMode={isTestMode}
             isSelected={selectedAnswer === option.key}
             showFeedback={showFeedback}
+            testModeContentToggled={testModeContentToggled}
           />
         ))}
       </div>
 
       <InfoToggle
         germanContext={question.context}
-        translatedContext={translation?.context}
+        translatedContext={question.translation?.[language]?.context || question.translation?.en?.context}
         onContentToggle={handleInfoToggle}
         isContentToggled={infoToggled}
+        isTestMode={isTestMode}
+        testModeContentToggled={testModeContentToggled}
+        showFeedback={showFeedback}
       />
     </div>
   );

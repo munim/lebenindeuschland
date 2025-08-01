@@ -7,18 +7,32 @@ interface InfoToggleProps {
   translatedContext?: string;
   onContentToggle?: () => void;
   isContentToggled?: boolean;
+  isTestMode?: boolean;
+  testModeContentToggled?: boolean;
+  showFeedback?: boolean;
 }
 
 export const InfoToggle: React.FC<InfoToggleProps> = ({ 
   germanContext, 
   translatedContext,
   onContentToggle,
-  isContentToggled = false
+  isContentToggled = false,
+  isTestMode = false,
+  testModeContentToggled = false,
+  showFeedback = false
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const getDisplayText = () => {
-    // If toggled and we have a translation, show it
+    // In test mode, show translation if test mode content is toggled and answer has been selected
+    if (isTestMode) {
+      if (testModeContentToggled && showFeedback && translatedContext) {
+        return translatedContext;
+      }
+      return germanContext;
+    }
+    
+    // In study mode, if toggled and we have a translation, show it
     if (isContentToggled && translatedContext) {
       return translatedContext;
     }
@@ -27,7 +41,8 @@ export const InfoToggle: React.FC<InfoToggleProps> = ({
   };
 
   const handleContentClick = () => {
-    if (onContentToggle) {
+    // Only allow content toggle in study mode
+    if (!isTestMode && onContentToggle) {
       onContentToggle();
     }
   };
@@ -65,14 +80,16 @@ export const InfoToggle: React.FC<InfoToggleProps> = ({
         <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <button
             onClick={handleContentClick}
-            className="text-left w-full hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-300 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
-            title="Click to toggle language"
+            className={`text-left w-full transition-all duration-300 rounded-md ${
+              isTestMode ? '' : 'hover:text-blue-600 dark:hover:text-blue-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+            }`}
+            title={isTestMode ? undefined : "Click to toggle language"}
           >
             <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed transition-all duration-300">
               {getDisplayText()}
             </p>
           </button>
-          {translatedContext && (
+          {!isTestMode && translatedContext && (
             <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               💡 Click the text above to toggle language
             </div>
