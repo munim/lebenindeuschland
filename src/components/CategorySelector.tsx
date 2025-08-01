@@ -8,12 +8,14 @@ interface CategorySelectorProps {
   selectedCategory: string | null;
   onCategoryChange: (categoryId: string | null) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 export const CategorySelector: React.FC<CategorySelectorProps> = ({ 
   selectedCategory, 
   onCategoryChange,
-  disabled = false
+  disabled = false,
+  className = ''
 }) => {
   const { language } = useLanguage();
   const [categories, setCategories] = useState<CategoryInfo[]>([]);
@@ -69,7 +71,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   if (loading) {
     return (
-      <div className="min-w-[200px]">
+      <div className={`${className.includes('w-full') ? 'w-full' : 'min-w-[200px]'} ${className}`}>
         <select disabled className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
           <option>Loading...</option>
         </select>
@@ -79,7 +81,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
 
   if (error) {
     return (
-      <div className="min-w-[200px]">
+      <div className={`${className.includes('w-full') ? 'w-full' : 'min-w-[200px]'} ${className}`}>
         <select disabled className="w-full px-3 py-2 border border-red-300 rounded-lg bg-red-50 text-red-500">
           <option>Error loading</option>
         </select>
@@ -88,7 +90,7 @@ export const CategorySelector: React.FC<CategorySelectorProps> = ({
   }
 
   return (
-    <div className="min-w-[200px]">
+    <div className={`${className.includes('w-full') ? 'w-full' : 'min-w-[200px]'} ${className}`}>
       <select
         value={selectedCategory || ''}
         onChange={handleCategoryChange}

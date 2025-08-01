@@ -12,6 +12,7 @@ interface StateSelectorProps {
   selectedState: string | null;
   onStateChange: (stateCode: string | null) => void;
   disabled?: boolean;
+  className?: string;
 }
 
 // Static list of German states with question counts
@@ -37,7 +38,8 @@ const GERMAN_STATES: StateInfo[] = [
 export const StateSelector: React.FC<StateSelectorProps> = ({ 
   selectedState, 
   onStateChange,
-  disabled = false
+  disabled = false,
+  className = ''
 }) => {
   const handleStateChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = e.target.value;
@@ -45,7 +47,7 @@ export const StateSelector: React.FC<StateSelectorProps> = ({
   };
 
   return (
-    <div className="min-w-[180px]">
+    <div className={`${className.includes('w-full') ? 'w-full' : 'min-w-[180px]'} ${className}`}>
       <select
         value={selectedState || ''}
         onChange={handleStateChange}

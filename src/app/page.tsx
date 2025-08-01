@@ -6,8 +6,7 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestModeToggle } from '@/components/TestModeToggle';
 import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
-import { CategorySelector } from '@/components/CategorySelector';
-import { StateSelector } from '@/components/StateSelector';
+import { CollapsibleFilterBar } from '@/components/CollapsibleFilterBar';
 import { Footer } from '@/components/Footer';
 import { useQuestionCache } from '@/lib/useQuestionCache';
 import { useSwipe } from '@/lib/useSwipe';
@@ -124,30 +123,14 @@ export default function Home() {
             </div>
             
             {/* Filter Controls */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 flex-1">
-                <CategorySelector
-                  selectedCategory={filters.category}
-                  onCategoryChange={handleCategoryChange}
-                  disabled={loading}
-                />
-                <StateSelector
-                  selectedState={filters.state}
-                  onStateChange={handleStateChange}
-                  disabled={loading}
-                />
-              </div>
-              
-              {(filters.category || filters.state) && (
-                <button
-                  onClick={handleResetFilters}
-                  disabled={loading}
-                  className="px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
-                >
-                  Reset Filters
-                </button>
-              )}
-            </div>
+            <CollapsibleFilterBar
+              selectedCategory={filters.category}
+              selectedState={filters.state}
+              onCategoryChange={handleCategoryChange}
+              onStateChange={handleStateChange}
+              onResetFilters={handleResetFilters}
+              disabled={loading}
+            />
           </header>
 
           <div className="mb-8 text-center">
