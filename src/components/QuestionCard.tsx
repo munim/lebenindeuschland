@@ -113,7 +113,7 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-sm font-medium ${getIndicatorStyles()}`}>
-            {String.fromCharCode(65 + index)}
+            {index + 1}
           </span>
           <span className="transition-all duration-300 transform">
             {getDisplayText()}
