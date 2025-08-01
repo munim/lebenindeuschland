@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import Image from 'next/image';
 import { Question } from '@/types/question';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -108,7 +108,8 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
       onClick={onToggle.onClick}
       onTouchStart={onToggle.onTouchStart}
       onTouchEnd={onToggle.onTouchEnd}
-      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none ${getButtonStyles()}`}
+      className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${getButtonStyles()}`}
+      tabIndex={0}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -188,6 +189,46 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     setShowFeedback(false);
   }, [question, translation]);
 
+  const handleAnswerToggle = useCallback((optionKey: string) => {
+    if (isTestMode) {
+      // Test mode: select answer and show feedback
+      setSelectedAnswer(optionKey);
+      setShowFeedback(true);
+    } else {
+      // Study mode: toggle translation
+      setAnswerToggles(prev => ({
+        ...prev,
+        [optionKey]: !prev[optionKey]
+      }));
+    }
+  }, [isTestMode]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle number keys in test mode and when not in input fields
+      if (!isTestMode || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      // Handle number keys 1-4 for answer selection
+      const keyNumber = parseInt(e.key);
+      if (keyNumber >= 1 && keyNumber <= 4) {
+        e.preventDefault();
+        const optionIndex = keyNumber - 1;
+        if (optionIndex < optionsWithTranslations.length && !showFeedback) {
+          const selectedOption = optionsWithTranslations[optionIndex];
+          handleAnswerToggle(selectedOption.key);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [isTestMode, optionsWithTranslations, showFeedback, handleAnswerToggle]);
+
   // Handle image loading state when image URL changes
   useEffect(() => {
     if (question.image && question.image !== '-') {
@@ -222,20 +263,6 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     }
     // Otherwise show the German text
     return question.question;
-  };
-
-  const handleAnswerToggle = (optionKey: string) => {
-    if (isTestMode) {
-      // Test mode: select answer and show feedback
-      setSelectedAnswer(optionKey);
-      setShowFeedback(true);
-    } else {
-      // Study mode: toggle translation
-      setAnswerToggles(prev => ({
-        ...prev,
-        [optionKey]: !prev[optionKey]
-      }));
-    }
   };
 
   const handleQuestionToggle = () => {

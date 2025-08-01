@@ -6,6 +6,7 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestModeToggle } from '@/components/TestModeToggle';
 import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
+import { KeyboardShortcutsModal, KeyboardShortcutsButton } from '@/components/KeyboardShortcutsModal';
 import { CollapsibleFilterBar } from '@/components/CollapsibleFilterBar';
 import { Footer } from '@/components/Footer';
 import { useQuestionCache } from '@/lib/useQuestionCache';
@@ -14,6 +15,7 @@ import { Pagination } from '@/components/Pagination';
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
   const {
     currentQuestion,
     currentQuestionIndex,
@@ -59,6 +61,36 @@ export default function Home() {
       container.removeEventListener('touchend', swipeHandlers.onTouchEnd);
     };
   }, [swipeHandlers]);
+
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Only handle navigation keys when not in input fields
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (hasPrevious && !loading) {
+            goToPrevious();
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (hasNext && !loading) {
+            goToNext();
+          }
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyPress);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress);
+    };
+  }, [hasNext, hasPrevious, loading, goToNext, goToPrevious]);
 
   const handleCategoryChange = (categoryId: string | null) => {
     updateFilters({ ...filters, category: categoryId });
@@ -114,6 +146,7 @@ export default function Home() {
                 <TestModeToggle />
                 <LanguageSelector />
                 <ThemeToggle />
+                <KeyboardShortcutsButton onClickAction={() => setIsKeyboardShortcutsOpen(true)} />
               </div>
               
               {/* Mobile Settings Button */}
@@ -190,6 +223,12 @@ export default function Home() {
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
+      />
+      
+      {/* Keyboard Shortcuts Modal */}
+      <KeyboardShortcutsModal 
+        isOpen={isKeyboardShortcutsOpen} 
+        onClose={() => setIsKeyboardShortcutsOpen(false)} 
       />
     </div>
   );
