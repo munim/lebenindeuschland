@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '@/components/QuestionCard';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestModeToggle } from '@/components/TestModeToggle';
+import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
 import { CategorySelector } from '@/components/CategorySelector';
 import { StateSelector } from '@/components/StateSelector';
 import { Footer } from '@/components/Footer';
@@ -13,6 +14,7 @@ import { useSwipe } from '@/lib/useSwipe';
 import { Pagination } from '@/components/Pagination';
 
 export default function Home() {
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const {
     currentQuestion,
     currentQuestionIndex,
@@ -107,10 +109,17 @@ export default function Home() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Leben In Deutschland
               </h1>
-              <div className="flex items-center space-x-4">
+              
+              {/* Desktop Controls */}
+              <div className="hidden md:flex items-center space-x-4">
                 <TestModeToggle />
                 <LanguageSelector />
                 <ThemeToggle />
+              </div>
+              
+              {/* Mobile Settings Button */}
+              <div className="md:hidden">
+                <SettingsButton onClickAction={() => setIsSettingsOpen(true)} />
               </div>
             </div>
             
@@ -193,6 +202,12 @@ export default function Home() {
         </div>
       </div>
       <Footer />
+      
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+      />
     </div>
   );
 }
