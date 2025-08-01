@@ -162,6 +162,7 @@ export default function Home() {
             {currentQuestion && (
               <div className="w-full">
                 <QuestionCard
+                  key={currentQuestion.id}
                   question={currentQuestion}
                   questionNumber={parseInt(currentQuestion.num)}
                 />

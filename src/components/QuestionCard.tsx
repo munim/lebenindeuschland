@@ -70,8 +70,10 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
   );
 };
 
+type AnswerKey = 'a' | 'b' | 'c' | 'd';
+
 interface ShuffledOption {
-  key: 'a' | 'b' | 'c' | 'd';
+  key: AnswerKey;
   text: string;
   translatedText?: string;
   isCorrect: boolean;
@@ -92,22 +94,28 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
 
   const translation = question.translation?.[language];
 
-  const shuffledOptions = useMemo(() => {
-    const options: ShuffledOption[] = [
-      { key: 'a', text: question.a, translatedText: translation?.a, isCorrect: question.solution === 'a' },
-      { key: 'b', text: question.b, translatedText: translation?.b, isCorrect: question.solution === 'b' },
-      { key: 'c', text: question.c, translatedText: translation?.c, isCorrect: question.solution === 'c' },
-      { key: 'd', text: question.d, translatedText: translation?.d, isCorrect: question.solution === 'd' },
+  const [shuffledOptions] = useState(() => {
+    const options = [
+      { key: 'a', text: question.a, isCorrect: question.solution === 'a' },
+      { key: 'b', text: question.b, isCorrect: question.solution === 'b' },
+      { key: 'c', text: question.c, isCorrect: question.solution === 'c' },
+      { key: 'd', text: question.d, isCorrect: question.solution === 'd' },
     ];
-    
-    const shuffled = [...options];
-    for (let i = shuffled.length - 1; i > 0; i--) {
+
+    // In-place shuffle for initial render
+    for (let i = options.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      [options[i], options[j]] = [options[j], options[i]];
     }
-    
-    return shuffled;
-  }, [question, translation]);
+    return options;
+  });
+
+  const optionsWithTranslations = useMemo(() => {
+    return shuffledOptions.map(option => ({
+      ...option,
+      translatedText: translation?.[option.key as AnswerKey]
+    }));
+  }, [shuffledOptions, translation]);
 
   useEffect(() => {
     setQuestionToggled(false);
@@ -237,10 +245,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
         </div>
       )}
 
-      <div className="space-y-2 min-h-[200px]">
-        {shuffledOptions.map((option, index) => (
+      <div className="flex flex-col gap-2 min-h-[200px]">
+        {optionsWithTranslations.map((option, index) => (
           <AnswerOption
-            key={index}
+            key={option.key}
             text={option.text}
             translatedText={option.translatedText}
             isCorrect={option.isCorrect}
