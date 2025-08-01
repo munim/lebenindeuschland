@@ -38,8 +38,10 @@ export default function Home() {
         goToPrevious();
       }
     },
-    threshold: 50
+    threshold: 50,
   });
+
+  
 
   useEffect(() => {
     const container = containerRef.current;

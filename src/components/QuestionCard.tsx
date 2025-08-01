@@ -72,12 +72,7 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
 
 type AnswerKey = 'a' | 'b' | 'c' | 'd';
 
-interface ShuffledOption {
-  key: AnswerKey;
-  text: string;
-  translatedText?: string;
-  isCorrect: boolean;
-}
+
 
 interface QuestionCardProps {
   question: Question;
