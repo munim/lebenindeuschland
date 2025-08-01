@@ -14,6 +14,7 @@ interface AnswerOptionProps {
   index: number;
   onToggle: {
     onTouchStart: (e: React.TouchEvent) => void;
+    onTouchMove: (e: React.TouchEvent) => void;
     onTouchEnd: (e: React.TouchEvent) => void;
     onClick: (e: React.MouseEvent) => void;
   };
@@ -107,6 +108,7 @@ const AnswerOption: React.FC<AnswerOptionProps> = ({
     <button
       onClick={onToggle.onClick}
       onTouchStart={onToggle.onTouchStart}
+      onTouchMove={onToggle.onTouchMove}
       onTouchEnd={onToggle.onTouchEnd}
       className={`w-full text-left p-3 rounded-lg border transition-all duration-300 min-h-[60px] select-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 ${getButtonStyles()}`}
       tabIndex={0}
@@ -274,24 +276,48 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
 
   // Prevent double firing on mobile (both touch and click events)
   const createSafeToggleHandler = (toggleFn: () => void) => {
+    let touchStartPos = { x: 0, y: 0 };
+    let touchMoved = false;
     let touchStarted = false;
+    const MOVEMENT_THRESHOLD = 10; // pixels - anything above this is considered scrolling
     
     return {
       onTouchStart: (e: React.TouchEvent) => {
+        const touch = e.touches[0];
+        touchStartPos = { x: touch.clientX, y: touch.clientY };
+        touchMoved = false;
         touchStarted = true;
-        e.preventDefault(); // Prevent text selection
+        // Don't prevent default - allow scrolling to work
+      },
+      onTouchMove: (e: React.TouchEvent) => {
+        if (!touchStarted) return;
+        
+        const touch = e.touches[0];
+        const deltaX = Math.abs(touch.clientX - touchStartPos.x);
+        const deltaY = Math.abs(touch.clientY - touchStartPos.y);
+        
+        // If movement exceeds threshold, mark as scroll gesture
+        if (deltaX > MOVEMENT_THRESHOLD || deltaY > MOVEMENT_THRESHOLD) {
+          touchMoved = true;
+        }
       },
       onTouchEnd: (e: React.TouchEvent) => {
-        if (touchStarted) {
+        if (!touchStarted) return;
+        
+        // Only trigger action if no significant movement detected (true tap)
+        if (!touchMoved) {
           e.preventDefault();
           e.stopPropagation();
           toggleFn();
-          touchStarted = false;
         }
+        
+        // Reset state
+        touchStarted = false;
+        touchMoved = false;
       },
       onClick: () => {
+        // Only handle click if it wasn't a touch event
         if (!touchStarted) {
-          // Only handle click if it wasn't a touch event
           toggleFn();
         }
       }
