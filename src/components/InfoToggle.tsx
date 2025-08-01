@@ -51,7 +51,7 @@ export const InfoToggle: React.FC<InfoToggleProps> = ({
     <div className="mt-4 border-t border-gray-200 dark:border-gray-700 pt-4">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+        className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-all duration-200 py-2 px-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
         aria-expanded={isOpen}
         aria-controls="info-content"
       >
