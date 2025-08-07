@@ -220,12 +220,36 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      // Only handle number keys in test mode and when not in input fields
-      if (!isTestMode || e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
 
-      // Handle number keys 1-4 for answer selection
+      const key = e.key.toLowerCase();
+
+      if (key === 't') {
+        e.preventDefault();
+        if (isTestMode) {
+          if (showFeedback) {
+            setTestModeContentToggled(prev => !prev);
+          }
+        } else {
+          setQuestionToggled(prev => !prev);
+          setInfoToggled(prev => !prev);
+          setAnswerToggles(prev => {
+            const next: Record<string, boolean> = {};
+            shuffledOptions.forEach(o => {
+              next[o.key] = !(prev[o.key] || false);
+            });
+            return next;
+          });
+        }
+        return;
+      }
+
+      if (!isTestMode) {
+        return;
+      }
+
       const keyNumber = parseInt(e.key);
       if (keyNumber >= 1 && keyNumber <= 4) {
         e.preventDefault();
@@ -242,7 +266,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     return () => {
       document.removeEventListener('keydown', handleKeyPress);
     };
-  }, [isTestMode, optionsWithTranslations, showFeedback, handleAnswerToggle]);
+  }, [isTestMode, optionsWithTranslations, showFeedback, handleAnswerToggle, shuffledOptions]);
 
   // Handle image loading state when image URL changes
   useEffect(() => {

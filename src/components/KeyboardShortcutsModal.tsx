@@ -114,6 +114,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                 </h3>
                 <div className="space-y-1">
                   <ShortcutItem keys={['1', '2', '3', '4']} description="Select answer option" />
+                  <ShortcutItem keys={['T']} description="Toggle translation (question, answers, info) after answering" />
                 </div>
               </div>
             )}
@@ -126,6 +127,7 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
               <div className="space-y-1">
                 <ShortcutItem keys={['Esc']} description="Close dialogs" />
                 <ShortcutItem keys={['Tab']} description="Navigate interface" />
+                <ShortcutItem keys={['T']} description="Toggle translation (question, answers, info)" />
               </div>
             </div>
 
