@@ -227,6 +227,9 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       const key = e.key.toLowerCase();
 
       if (key === 't') {
+        if (e.ctrlKey || e.metaKey) {
+          return;
+        }
         e.preventDefault();
         if (isTestMode) {
           if (showFeedback) {
