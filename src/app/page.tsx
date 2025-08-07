@@ -69,19 +69,23 @@ export default function Home() {
         return;
       }
 
-      switch (e.key) {
-        case 'ArrowLeft':
-          e.preventDefault();
-          if (hasPrevious && !loading) {
-            goToPrevious();
-          }
-          break;
-        case 'ArrowRight':
-          e.preventDefault();
-          if (hasNext && !loading) {
-            goToNext();
-          }
-          break;
+      const isTab = e.key === 'Tab';
+      const isShiftTab = e.key === 'Tab' && e.shiftKey;
+
+      if (e.key === 'ArrowLeft' || isShiftTab) {
+        e.preventDefault();
+        if (hasPrevious && !loading) {
+          goToPrevious();
+        }
+        return;
+      }
+
+      if (e.key === 'ArrowRight' || isTab) {
+        e.preventDefault();
+        if (hasNext && !loading) {
+          goToNext();
+        }
+        return;
       }
     };
 
