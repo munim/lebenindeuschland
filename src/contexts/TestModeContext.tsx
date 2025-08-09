@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { useLanguage } from './LanguageContext';
 
 interface TestModeContextType {
   isTestMode: boolean;
@@ -24,14 +23,9 @@ interface TestModeProviderProps {
 
 export const TestModeProvider: React.FC<TestModeProviderProps> = ({ children }) => {
   const [isTestMode, setIsTestMode] = useState(false);
-  const { setLanguage } = useLanguage();
 
   const setTestMode = (enabled: boolean) => {
     setIsTestMode(enabled);
-    if (enabled) {
-      // Force German language when entering test mode
-      setLanguage('de');
-    }
   };
 
   return (
