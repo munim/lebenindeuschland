@@ -25,8 +25,19 @@ async function generateStaticData() {
     const questionsData = await fs.readFile(QUESTIONS_FILE, 'utf8');
     const allQuestions = JSON.parse(questionsData);
     
-    // Get unique categories
-    const categories = [...new Set(allQuestions.map(q => q.category))].sort();
+    // Normalize category names by removing quotes
+    const normalizeCategory = (category) => {
+      return category.replace(/^'|'$/g, '');
+    };
+    
+    // Normalize categories in questions
+    const normalizedQuestions = allQuestions.map(q => ({
+      ...q,
+      category: normalizeCategory(q.category)
+    }));
+    
+    // Get unique categories from normalized data
+    const categories = [...new Set(normalizedQuestions.map(q => q.category))].sort();
     
     // Supported languages
     const languages = ['de', 'en', 'tr'];
@@ -41,7 +52,7 @@ async function generateStaticData() {
       await fs.mkdir(path.join(langDir, 'states'), { recursive: true });
       
       // Filter questions for this language
-      const langQuestions = allQuestions.map(q => filterQuestionForLanguage(q, lang));
+      const langQuestions = normalizedQuestions.map(q => filterQuestionForLanguage(q, lang));
       
       // Separate base questions (1-300) from state questions
       const baseQuestions = langQuestions.filter(q => 
@@ -76,7 +87,7 @@ async function generateStaticData() {
       const categoryMeta = categories.map(cat => ({
         id: createSlug(cat),
         name: cat,
-        count: allQuestions.filter(q => q.category === cat).length
+        count: normalizedQuestions.filter(q => q.category === cat).length
       }));
       
       await generateCategoriesFile(langDir, categoryMeta, baseQuestions, lang);
@@ -97,7 +108,7 @@ async function generateStaticData() {
     }
     
     // Generate metadata file
-    await generateMetadataFile(allQuestions, categories, languages);
+    await generateMetadataFile(normalizedQuestions, categories, languages);
     
     // Generate randomization seeds
     const seedCount = await generateRandomizationSeeds();
@@ -105,7 +116,7 @@ async function generateStaticData() {
     
     console.log('🎉 Optimized static data generation completed!');
     console.log(`📁 Generated files in: ${OUTPUT_DIR}`);
-    console.log(`📊 Total: ${allQuestions.length} questions, ${categories.length} categories, ${Object.keys(GERMAN_STATES).length} states, ${languages.length} languages`);
+    console.log(`📊 Total: ${normalizedQuestions.length} questions, ${categories.length} categories, ${Object.keys(GERMAN_STATES).length} states, ${languages.length} languages`);
     
   } catch (error) {
     console.error('❌ Error generating static data:', error);
