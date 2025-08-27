@@ -192,7 +192,79 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     return stateMapping[stateCode] || null;
   };
 
+  // Get category information with icon and styling
+  const getCategoryInfo = () => {
+    if (!question.category) return null;
+    
+    // Normalize category name by removing quotes and mapping to consistent names
+    const normalizeCategory = (category: string) => {
+      return category.replace(/^'|'$/g, ''); // Remove leading/trailing quotes
+    };
+    
+    const normalizedCategory = normalizeCategory(question.category);
+    
+    const categoryMapping: Record<string, { name: string; icon: string; color: string }> = {
+      'History & Geography': { 
+        name: 'History & Geography', 
+        icon: '🏛️', 
+        color: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-600' 
+      },
+      'Democracy & Politics': { 
+        name: 'Democracy & Politics', 
+        icon: '🗳️', 
+        color: 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-700' 
+      },
+      'Rights & Freedoms': { 
+        name: 'Rights & Freedoms', 
+        icon: '⚖️', 
+        color: 'bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700' 
+      },
+      'Law & Governance': { 
+        name: 'Law & Governance', 
+        icon: '🏛️', 
+        color: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-700' 
+      },
+      'Elections': { 
+        name: 'Elections', 
+        icon: '🗳️', 
+        color: 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-700' 
+      },
+      'Education & Religion': { 
+        name: 'Education & Religion', 
+        icon: '🎓', 
+        color: 'bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-700' 
+      },
+      'Economy & Employment': { 
+        name: 'Economy & Employment', 
+        icon: '💼', 
+        color: 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border-green-200 dark:border-green-700' 
+      },
+      'Federal System': { 
+        name: 'Federal System', 
+        icon: '🏢', 
+        color: 'bg-cyan-50 dark:bg-cyan-900/20 text-cyan-700 dark:text-cyan-300 border-cyan-200 dark:border-cyan-700' 
+      },
+      'Constitution': { 
+        name: 'Constitution', 
+        icon: '📜', 
+        color: 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border-red-200 dark:border-red-700' 
+      },
+      'Assembly & Protests': { 
+        name: 'Assembly & Protests', 
+        icon: '✊', 
+        color: 'bg-orange-50 dark:bg-orange-900/20 text-orange-700 dark:text-orange-300 border-orange-200 dark:border-orange-700' 
+      },
+    };
+
+    return categoryMapping[normalizedCategory] || {
+      name: normalizedCategory,
+      icon: '📚',
+      color: 'bg-gray-50 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-200 dark:border-gray-600'
+    };
+  };
+
   const stateInfo = getStateInfo();
+  const categoryInfo = getCategoryInfo();
 
   const [shuffledOptions] = useState(() => {
     const options = [
@@ -427,6 +499,12 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Question {questionNumber}
             </h3>
+            {categoryInfo && (
+              <span className={`inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium border ${categoryInfo.color}`}>
+                <span className="mr-1">{categoryInfo.icon}</span>
+                {categoryInfo.name}
+              </span>
+            )}
             {stateInfo && (
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stateInfo.color}`}>
                 {stateInfo.name}
