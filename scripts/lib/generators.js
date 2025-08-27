@@ -275,6 +275,29 @@ async function generateCategoryQuestions(langDir, baseQuestions, categories, lan
   }
 }
 
+async function generateRandomizationSeeds() {
+  // Generate 15 random seeds for question randomization
+  const seeds = [];
+  for (let i = 0; i < 15; i++) {
+    // Generate a random seed using current timestamp and random number
+    const seed = Date.now() + Math.floor(Math.random() * 1000000) + i;
+    seeds.push(seed);
+  }
+  
+  const seedsData = {
+    seeds,
+    generated: new Date().toISOString(),
+    description: "Random seeds for question shuffling. Pick one randomly on client-side."
+  };
+  
+  await fs.writeFile(
+    path.join(OUTPUT_DIR, 'randomization-seeds.json'),
+    JSON.stringify(seedsData, null, 2)
+  );
+  
+  return seeds.length;
+}
+
 async function generateMetadataFile(allQuestions, categories, languages) {
   const categoryMeta = categories.map(cat => ({
     id: createSlug(cat),
@@ -323,5 +346,6 @@ module.exports = {
   generateBaseQuestions,
   generateStateQuestions,
   generateCategoryQuestions,
-  generateMetadataFile
+  generateMetadataFile,
+  generateRandomizationSeeds
 };

@@ -1,5 +1,34 @@
 import { QuestionsResponse, CategoriesResponse, CategoryResponse, Language } from '@/types/question';
 
+// Fetch complete question set (all questions for randomization)
+export async function fetchCompleteQuestions(
+  language: Language = 'de',
+  stateCode?: string,
+  categoryId?: string
+): Promise<QuestionsResponse> {
+  let url: string;
+  
+  if (stateCode && categoryId && categoryId !== 'all') {
+    // State + category
+    url = `/data/${language}/${stateCode}/${categoryId}/full.json`;
+  } else if (stateCode) {
+    // State only (includes base + state questions)
+    url = `/data/${language}/${stateCode}/all/full.json`;
+  } else if (categoryId && categoryId !== 'all') {
+    // Category only
+    url = `/data/${language}/${categoryId}/full.json`;
+  } else {
+    // All base questions only
+    url = `/data/${language}/all/full.json`;
+  }
+  
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch complete questions: ${response.status}`);
+  }
+  return response.json();
+}
+
 // Fetch all base questions (no filters)
 export async function fetchAllQuestions(
   language: Language = 'de',

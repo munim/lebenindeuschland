@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Question, FilterState } from '@/types/question';
 import { fetchAllQuestions, fetchCategoryQuestions, fetchStateQuestions, fetchStateCategoryQuestions } from '@/lib/api';
+import { useRandomization } from '@/contexts/RandomizationContext';
 
 interface QuestionCache {
   [key: number]: Question[];
@@ -10,6 +11,7 @@ const STORAGE_KEY = 'current-question-index';
 const FILTER_STORAGE_KEY = 'question-filters';
 
 export const useQuestionCache = () => {
+  const { isEnabled: isRandomizationEnabled } = useRandomization();
   const [cache, setCache] = useState<QuestionCache>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -92,7 +94,7 @@ export const useQuestionCache = () => {
   }, [filters]);
 
   const preloadPages = useCallback(async (centerPage: number) => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || isRandomizationEnabled) return;
 
     const fetchFn = getFetchFunction();
     const pagesToLoad = [centerPage - 1, centerPage, centerPage + 1].filter(p => p > 0);
@@ -122,7 +124,7 @@ export const useQuestionCache = () => {
         });
       }
     }
-  }, [getFetchFunction]);
+  }, [getFetchFunction, isRandomizationEnabled]);
 
   // Get current question from cache
   const getCurrentQuestion = useCallback((): Question | null => {
@@ -164,7 +166,7 @@ export const useQuestionCache = () => {
   // Main effect for initialization and data loading
   useEffect(() => {
     const initializeAndLoad = async () => {
-      if (typeof window === 'undefined' || !isInitialized) {
+      if (typeof window === 'undefined' || !isInitialized || isRandomizationEnabled) {
         return;
       }
 
@@ -186,7 +188,7 @@ export const useQuestionCache = () => {
     };
 
     initializeAndLoad();
-  }, [isInitialized, filters, currentQuestionIndex, getFetchFunction]);
+  }, [isInitialized, filters, currentQuestionIndex, getFetchFunction, isRandomizationEnabled]);
 
   
 

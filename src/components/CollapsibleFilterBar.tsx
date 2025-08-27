@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useTestMode } from '@/contexts/TestModeContext';
 import { CategorySelector } from './CategorySelector';
 import { StateSelector } from './StateSelector';
 
@@ -21,6 +22,7 @@ export const CollapsibleFilterBar: React.FC<CollapsibleFilterBarProps> = ({
   onResetFilters,
   disabled = false,
 }) => {
+  const { isTestMode } = useTestMode();
   const [isExpanded, setIsExpanded] = useState(false);
   
   const hasActiveFilters = selectedCategory || selectedState;
@@ -37,12 +39,15 @@ export const CollapsibleFilterBar: React.FC<CollapsibleFilterBarProps> = ({
     return '';
   };
 
+  // Disable filters when in test mode
+  const isFilterDisabled = disabled || isTestMode;
+
   return (
     <div className="bg-gray-50 dark:bg-gray-800 rounded-lg overflow-hidden transition-all duration-200">
       {/* Collapsible Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        disabled={disabled}
+        disabled={isFilterDisabled}
         className="w-full flex items-center justify-between p-4 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         aria-expanded={isExpanded}
         aria-controls="filter-content"
@@ -102,7 +107,7 @@ export const CollapsibleFilterBar: React.FC<CollapsibleFilterBarProps> = ({
                 <CategorySelector
                   selectedCategory={selectedCategory}
                   onCategoryChange={onCategoryChange}
-                  disabled={disabled}
+                  disabled={isFilterDisabled}
                   className="w-full sm:w-auto"
                 />
               </div>
@@ -110,7 +115,7 @@ export const CollapsibleFilterBar: React.FC<CollapsibleFilterBarProps> = ({
                 <StateSelector
                   selectedState={selectedState}
                   onStateChange={onStateChange}
-                  disabled={disabled}
+                  disabled={isFilterDisabled}
                   className="w-full sm:w-auto"
                 />
               </div>
@@ -120,7 +125,7 @@ export const CollapsibleFilterBar: React.FC<CollapsibleFilterBarProps> = ({
             {hasActiveFilters && (
               <button
                 onClick={onResetFilters}
-                disabled={disabled}
+                disabled={isFilterDisabled}
                 className="w-full sm:w-auto px-4 py-2 text-sm bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white rounded-lg transition-colors"
               >
                 Reset Filters

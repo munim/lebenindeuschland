@@ -1,9 +1,8 @@
 'use client';
 
-import React from 'react';
 import { useTestMode } from '@/contexts/TestModeContext';
 
-export const TestModeToggle: React.FC = () => {
+export function TestModeToggle() {
   const { isTestMode, setTestMode } = useTestMode();
 
   return (
@@ -27,4 +26,4 @@ export const TestModeToggle: React.FC = () => {
       </button>
     </div>
   );
-};
+}

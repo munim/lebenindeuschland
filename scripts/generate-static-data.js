@@ -13,7 +13,8 @@ const {
   generateBaseQuestions,
   generateStateQuestions,
   generateCategoryQuestions,
-  generateMetadataFile
+  generateMetadataFile,
+  generateRandomizationSeeds
 } = require('./lib/generators');
 
 async function generateStaticData() {
@@ -97,6 +98,10 @@ async function generateStaticData() {
     
     // Generate metadata file
     await generateMetadataFile(allQuestions, categories, languages);
+    
+    // Generate randomization seeds
+    const seedCount = await generateRandomizationSeeds();
+    console.log(`🎲 Generated ${seedCount} randomization seeds`);
     
     console.log('🎉 Optimized static data generation completed!');
     console.log(`📁 Generated files in: ${OUTPUT_DIR}`);

@@ -4,6 +4,7 @@ import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TestModeProvider } from "@/contexts/TestModeContext";
+import { RandomizationProvider } from "@/contexts/RandomizationContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -35,7 +36,9 @@ export default function RootLayout({
           <ThemeProvider>
             <LanguageProvider>
               <TestModeProvider>
-                {children}
+                <RandomizationProvider>
+                  {children}
+                </RandomizationProvider>
               </TestModeProvider>
             </LanguageProvider>
           </ThemeProvider>

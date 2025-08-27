@@ -5,17 +5,28 @@ import { QuestionCard } from '@/components/QuestionCard';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestModeToggle } from '@/components/TestModeToggle';
+import { RandomizationToggle } from '@/components/RandomizationToggle';
 import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
 import { KeyboardShortcutsModal, KeyboardShortcutsButton } from '@/components/KeyboardShortcutsModal';
 import { CollapsibleFilterBar } from '@/components/CollapsibleFilterBar';
 import { Footer } from '@/components/Footer';
 import { useQuestionCache } from '@/lib/useQuestionCache';
+import { useRandomizedQuestionCache } from '@/lib/useRandomizedQuestionCache';
+import { useRandomization } from '@/contexts/RandomizationContext';
 import { useSwipe } from '@/lib/useSwipe';
 import { Pagination } from '@/components/Pagination';
 
 export default function Home() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
+  const { isEnabled: isRandomizationEnabled } = useRandomization();
+  
+  // Use randomized cache when randomization is enabled, otherwise use regular cache
+  const regularCache = useQuestionCache();
+  const randomizedCache = useRandomizedQuestionCache();
+  
+  const questionCache = isRandomizationEnabled ? randomizedCache : regularCache;
+  
   const {
     currentQuestion,
     currentQuestionIndex,
@@ -29,7 +40,7 @@ export default function Home() {
     hasPrevious,
     filters,
     updateFilters,
-  } = useQuestionCache();
+  } = questionCache;
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -148,6 +159,7 @@ export default function Home() {
               {/* Desktop Controls */}
               <div className="hidden md:flex items-center space-x-4">
                 <TestModeToggle />
+                <RandomizationToggle />
                 <LanguageSelector />
                 <ThemeToggle />
                 <KeyboardShortcutsButton onClickAction={() => setIsKeyboardShortcutsOpen(true)} />
@@ -187,6 +199,11 @@ export default function Home() {
               {getFilterDisplayText() && (
                 <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
                   {getFilterDisplayText()}
+                </span>
+              )}
+              {isRandomizationEnabled && (
+                <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                  🎲 Randomized
                 </span>
               )}
             </div>
