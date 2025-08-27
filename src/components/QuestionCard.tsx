@@ -173,9 +173,19 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       { key: 'd', text: question.d, isCorrect: question.solution === 'd' },
     ];
 
-    // In-place shuffle for initial render
+    // Use question.num as seed for consistent shuffle across server/client
+    const seed = parseInt(question.num) || 1;
+    let random = seed;
+    
+    // Simple seedable random function (Linear Congruential Generator)
+    const seededRandom = () => {
+      random = (random * 1103515245 + 12345) & 0x7fffffff;
+      return random / 0x7fffffff;
+    };
+
+    // Fisher-Yates shuffle with seeded random
     for (let i = options.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
+      const j = Math.floor(seededRandom() * (i + 1));
       [options[i], options[j]] = [options[j], options[i]];
     }
     return options;

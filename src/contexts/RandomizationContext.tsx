@@ -1,10 +1,11 @@
 'use client';
 
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { isRandomizationEnabled, setRandomizationEnabled } from '@/lib/randomization';
 
 interface RandomizationContextType {
   isEnabled: boolean;
+  isInitialized: boolean;
   toggleRandomization: (enabled: boolean) => void;
   currentSeed: number | null;
   setCurrentSeed: (seed: number | null) => void;
@@ -25,14 +26,15 @@ interface RandomizationProviderProps {
 }
 
 export function RandomizationProvider({ children }: RandomizationProviderProps) {
-  const [isEnabled, setIsEnabled] = useState(() => {
-    // Initialize from localStorage immediately if available
-    if (typeof window !== 'undefined') {
-      return isRandomizationEnabled();
-    }
-    return false;
-  });
+  const [isEnabled, setIsEnabled] = useState(false); // Always start with false for consistent hydration
   const [currentSeed, setCurrentSeed] = useState<number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize from localStorage after hydration
+  useEffect(() => {
+    setIsEnabled(isRandomizationEnabled());
+    setIsInitialized(true);
+  }, []);
 
   const toggleRandomization = (enabled: boolean) => {
     setIsEnabled(enabled);
@@ -47,7 +49,8 @@ export function RandomizationProvider({ children }: RandomizationProviderProps) 
   return (
     <RandomizationContext.Provider 
       value={{
-        isEnabled,
+        isEnabled: isInitialized ? isEnabled : false, // Always false until initialized
+        isInitialized,
         toggleRandomization,
         currentSeed,
         setCurrentSeed

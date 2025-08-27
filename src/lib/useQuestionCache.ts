@@ -11,10 +11,12 @@ const STORAGE_KEY = 'current-question-index';
 const FILTER_STORAGE_KEY = 'question-filters';
 
 export const useQuestionCache = () => {
-  const { isEnabled: isRandomizationEnabled } = useRandomization();
+  const { isEnabled: isRandomizationEnabled, isInitialized: randomizationInitialized } = useRandomization();
   const [cache, setCache] = useState<QuestionCache>({});
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const skeletonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -24,8 +26,45 @@ export const useQuestionCache = () => {
   // Use refs to avoid stale closures
   const cacheRef = useRef(cache);
   const loadingPagesRef = useRef(loadingPages);
+  const currentQuestionIndexRef = useRef(currentQuestionIndex);
   
-  // Update refs when state changes
+  // Helper to start loading with optional skeleton delay
+  const startLoading = useCallback((reason: 'initial' | 'filter' | 'navigation') => {
+    setLoading(true);
+    setShowSkeleton(false);
+    
+    // Clear any existing timeout
+    if (skeletonTimeoutRef.current) {
+      clearTimeout(skeletonTimeoutRef.current);
+    }
+    
+    // Show skeleton after 300ms delay, but only for certain reasons
+    if (reason === 'initial' || reason === 'filter') {
+      skeletonTimeoutRef.current = setTimeout(() => {
+        setShowSkeleton(true);
+      }, 300);
+    }
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    setLoading(false);
+    setShowSkeleton(false);
+    
+    // Clear skeleton timeout
+    if (skeletonTimeoutRef.current) {
+      clearTimeout(skeletonTimeoutRef.current);
+      skeletonTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (skeletonTimeoutRef.current) {
+        clearTimeout(skeletonTimeoutRef.current);
+      }
+    };
+  }, []);
   useEffect(() => {
     cacheRef.current = cache;
   }, [cache]);
@@ -33,6 +72,10 @@ export const useQuestionCache = () => {
   useEffect(() => {
     loadingPagesRef.current = loadingPages;
   }, [loadingPages]);
+
+  useEffect(() => {
+    currentQuestionIndexRef.current = currentQuestionIndex;
+  }, [currentQuestionIndex]);
 
   // Load saved question index and filters from localStorage on mount
   useEffect(() => {
@@ -94,7 +137,7 @@ export const useQuestionCache = () => {
   }, [filters]);
 
   const preloadPages = useCallback(async (centerPage: number) => {
-    if (typeof window === 'undefined' || isRandomizationEnabled) return;
+    if (typeof window === 'undefined' || !randomizationInitialized || isRandomizationEnabled) return;
 
     const fetchFn = getFetchFunction();
     const pagesToLoad = [centerPage - 1, centerPage, centerPage + 1].filter(p => p > 0);
@@ -123,8 +166,8 @@ export const useQuestionCache = () => {
           return next;
         });
       }
-    }
-  }, [getFetchFunction, isRandomizationEnabled]);
+      }
+    }, [getFetchFunction, randomizationInitialized, isRandomizationEnabled]);
 
   // Get current question from cache
   const getCurrentQuestion = useCallback((): Question | null => {
@@ -161,34 +204,45 @@ export const useQuestionCache = () => {
     setFilters(newFilters);
     setCurrentQuestionIndex(0); // Reset to first question
     setTotalQuestions(0);
+    // Clear cache when filters change to force reload
+    setCache({});
   }, []);
 
-  // Main effect for initialization and data loading
+  // Main effect for filter changes and initialization
   useEffect(() => {
-    const initializeAndLoad = async () => {
-      if (typeof window === 'undefined' || !isInitialized || isRandomizationEnabled) {
+    const loadFilteredQuestions = async () => {
+      if (typeof window === 'undefined' || !isInitialized || !randomizationInitialized) {
+        return;
+      }
+      if (isRandomizationEnabled) {
         return;
       }
 
       try {
-        setLoading(true);
-
-        const targetPage = getPageForQuestion(currentQuestionIndex);
+        startLoading('filter');
         const fetchFn = getFetchFunction();
-
-        const response = await fetchFn(targetPage);
-        setCache({ [targetPage]: response.questions });
+        
+        // Always load page 1 first to get total questions and basic data
+        const response = await fetchFn(1);
+        setCache({ 1: response.questions });
         setTotalQuestions(response.pagination.totalQuestions);
-
+        
+        // If current question is not on page 1, load the correct page immediately
+        const currentPage = getPageForQuestion(currentQuestionIndexRef.current);
+        if (currentPage > 1) {
+          const currentPageResponse = await fetchFn(currentPage);
+          setCache(prev => ({ ...prev, [currentPage]: currentPageResponse.questions }));
+        }
+        
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load questions');
       } finally {
-        setLoading(false);
+        stopLoading();
       }
     };
 
-    initializeAndLoad();
-  }, [isInitialized, filters, currentQuestionIndex, getFetchFunction, isRandomizationEnabled]);
+    loadFilteredQuestions();
+  }, [filters, getFetchFunction, isInitialized, randomizationInitialized, isRandomizationEnabled, startLoading, stopLoading]);
 
   
 
@@ -197,6 +251,7 @@ export const useQuestionCache = () => {
     currentQuestionIndex,
     totalQuestions,
     loading,
+    showSkeleton,
     error,
     goToNext,
     goToPrevious,

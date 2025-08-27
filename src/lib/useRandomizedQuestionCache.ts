@@ -12,11 +12,13 @@ const STORAGE_KEY = 'current-question-index';
 const FILTER_STORAGE_KEY = 'question-filters';
 
 export const useRandomizedQuestionCache = () => {
-  const { isEnabled: isRandomizationEnabled, currentSeed, setCurrentSeed } = useRandomization();
+  const { isEnabled: isRandomizationEnabled, isInitialized: randomizationInitialized, currentSeed, setCurrentSeed } = useRandomization();
   const [allQuestions, setAllQuestions] = useState<Question[]>([]);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showSkeleton, setShowSkeleton] = useState(false);
+  const skeletonTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [filters, setFilters] = useState<FilterState>({ category: null, state: null });
@@ -24,7 +26,41 @@ export const useRandomizedQuestionCache = () => {
   const allQuestionsRef = useRef<Question[]>([]);
   const shuffledQuestionsRef = useRef<Question[]>([]);
   
-  // Update refs when state changes
+  // Helper to start loading with optional skeleton delay
+  const startLoading = useCallback(() => {
+    setLoading(true);
+    setShowSkeleton(false);
+    
+    // Clear any existing timeout
+    if (skeletonTimeoutRef.current) {
+      clearTimeout(skeletonTimeoutRef.current);
+    }
+    
+    // Show skeleton after 300ms delay
+    skeletonTimeoutRef.current = setTimeout(() => {
+      setShowSkeleton(true);
+    }, 300);
+  }, []);
+
+  const stopLoading = useCallback(() => {
+    setLoading(false);
+    setShowSkeleton(false);
+    
+    // Clear skeleton timeout
+    if (skeletonTimeoutRef.current) {
+      clearTimeout(skeletonTimeoutRef.current);
+      skeletonTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (skeletonTimeoutRef.current) {
+        clearTimeout(skeletonTimeoutRef.current);
+      }
+    };
+  }, []);
   useEffect(() => {
     allQuestionsRef.current = allQuestions;
   }, [allQuestions]);
@@ -75,10 +111,11 @@ export const useRandomizedQuestionCache = () => {
   // Load and shuffle questions when filters or randomization changes
   useEffect(() => {
     const loadQuestions = async () => {
-      if (!isInitialized || !isRandomizationEnabled) return;
+      if (!isInitialized || !randomizationInitialized) return;
+      if (!isRandomizationEnabled) return;
 
       try {
-        setLoading(true);
+        startLoading();
         setError(null);
 
         // Fetch complete question set for current filters
@@ -104,12 +141,12 @@ export const useRandomizedQuestionCache = () => {
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load questions');
       } finally {
-        setLoading(false);
+        stopLoading();
       }
     };
 
     loadQuestions();
-  }, [isInitialized, filters, isRandomizationEnabled, currentSeed, setCurrentSeed]);
+  }, [isInitialized, randomizationInitialized, filters, isRandomizationEnabled, currentSeed, setCurrentSeed, startLoading, stopLoading]);
 
   // Get current question
   const getCurrentQuestion = useCallback((): Question | null => {
@@ -155,6 +192,7 @@ export const useRandomizedQuestionCache = () => {
     currentQuestionIndex,
     totalQuestions,
     loading,
+    showSkeleton,
     error,
     goToNext,
     goToPrevious,
