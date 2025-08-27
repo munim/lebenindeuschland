@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '@/components/QuestionCard';
+import { QuestionCardSkeleton } from '@/components/QuestionCardSkeleton';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { TestModeToggle } from '@/components/TestModeToggle';
@@ -32,6 +33,7 @@ export default function Home() {
     currentQuestionIndex,
     totalQuestions,
     loading,
+    showSkeleton,
     error,
     goToNext,
     goToPrevious,
@@ -130,10 +132,86 @@ export default function Home() {
     return '';
   };
 
-  if (loading && !currentQuestion) {
+  if (showSkeleton) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="text-gray-600 dark:text-gray-400">Loading questions...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col">
+        <div className="flex-1">
+          <div className="container mx-auto px-4 py-8 max-w-4xl">
+            <header className="mb-8">
+              <div className="flex items-center justify-between mb-4">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+                  Leben In Deutschland
+                </h1>
+                
+                {/* Desktop Controls */}
+                <div className="hidden md:flex items-center space-x-4">
+                  <TestModeToggle />
+                  <RandomizationToggle />
+                  <LanguageSelector />
+                  <ThemeToggle />
+                  <KeyboardShortcutsButton onClickAction={() => setIsKeyboardShortcutsOpen(true)} />
+                </div>
+                
+                {/* Mobile Settings Button */}
+                <div className="md:hidden">
+                  <SettingsButton onClickAction={() => setIsSettingsOpen(true)} />
+                </div>
+              </div>
+              
+              {/* Filter Controls */}
+              <CollapsibleFilterBar
+                selectedCategory={filters.category}
+                selectedState={filters.state}
+                onCategoryChange={handleCategoryChange}
+                onStateChange={handleStateChange}
+                onResetFilters={handleResetFilters}
+                disabled={loading}
+              />
+            </header>
+
+            <div className="mb-8 text-center">
+              <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                Questions and Answers
+              </h2>
+              <p className="text-gray-600 dark:text-gray-400">
+                {filters.category || filters.state 
+                  ? `Filtered questions for the 'Life in Germany' test`
+                  : `Here you can find all questions and answers for the 'Life in Germany' test`
+                }
+              </p>
+              <div className="flex items-center justify-center gap-4 mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Loading questions...
+                </p>
+                {getFilterDisplayText() && (
+                  <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
+                    {getFilterDisplayText()}
+                  </span>
+                )}
+                {isRandomizationEnabled && (
+                  <span className="text-xs px-2 py-1 bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 rounded-full">
+                    🎲 Randomized
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Pagination Skeleton */}
+            <div className="mb-6 flex justify-center">
+              <div className="flex items-center space-x-2">
+                <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+
+            {/* Question Skeleton */}
+            <div ref={containerRef} className="relative touch-pan-y">
+              <QuestionCardSkeleton showImageSkeleton={true} />
+            </div>
+          </div>
+        </div>
+        <Footer />
       </div>
     );
   }
@@ -211,7 +289,9 @@ export default function Home() {
 
           {/* Question Display with Stable Container */}
           <div ref={containerRef} className="relative touch-pan-y">
-            {currentQuestion && (
+            {showSkeleton ? (
+              <QuestionCardSkeleton showImageSkeleton={true} />
+            ) : currentQuestion ? (
               <div className="w-full">
                 <QuestionCard
                   key={currentQuestion.id}
@@ -219,15 +299,31 @@ export default function Home() {
                   questionNumber={parseInt(currentQuestion.num)}
                 />
               </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-600 dark:text-gray-400">
+                  No questions available. Please check your data configuration.
+                </p>
+              </div>
             )}
           </div>
 
           {/* Pagination */}
-          <Pagination
-            currentPage={currentQuestionIndex + 1}
-            totalPages={totalQuestions}
-            onPageChange={(page) => goToQuestion(page - 1)}
-          />
+          {showSkeleton ? (
+            <div className="mt-6 flex justify-center">
+              <div className="flex items-center space-x-2">
+                <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            </div>
+          ) : (
+            <Pagination
+              currentPage={currentQuestionIndex + 1}
+              totalPages={totalQuestions}
+              onPageChange={(page) => goToQuestion(page - 1)}
+            />
+          )}
 
           {!currentQuestion && !loading && (
             <div className="text-center py-12">
