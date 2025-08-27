@@ -2,6 +2,8 @@
 
 A multilingual quiz application for the German citizenship test ("Leben in Deutschland") built with Next.js and deployed as a static site.
 
+![Application Screenshot](public/screenshot.png)
+
 ## Features
 
 - 📚 460 questions (300 base + 160 state-specific questions)
@@ -9,9 +11,32 @@ A multilingual quiz application for the German citizenship test ("Leben in Deuts
 - 🏛️ State-specific questions for all 16 German states
 - 📖 14 question categories
 - 🎯 Interactive quiz interface with answer shuffling
+- 🧪 Test mode with answer selection and feedback
+- 🔀 Question randomization toggle
+- ⌨️ Keyboard navigation (Arrow keys, Vim-style j/k keys, Tab navigation)
 - 🌓 Dark/light theme support
-- 📱 Mobile-responsive design
+- 📱 Mobile-responsive design with touch/swipe support
 - 🔄 Question navigation and pagination
+- ⚡ Skeleton loading states for smooth UX
+- 🎛️ Collapsible filter controls
+- ⚙️ Settings modal with keyboard shortcuts reference
+- 📊 Question cache optimization for performance
+
+## Keyboard Shortcuts
+
+The application supports comprehensive keyboard navigation:
+
+### Navigation
+- **Next question:** `→` (Right arrow), `J`, or `Tab`
+- **Previous question:** `←` (Left arrow), `K`, or `Shift+Tab`
+
+### Test Mode
+- **Select answers:** `1`, `2`, `3`, `4` (number keys)
+- **Toggle translations:** `T` (after answering)
+
+### General
+- **Close modals:** `Esc`
+- **Access shortcuts:** Click the keyboard icon in the top bar
 
 ## Getting Started
 
