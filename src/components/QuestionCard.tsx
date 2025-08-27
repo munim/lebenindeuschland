@@ -165,6 +165,35 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
 
   const translation = question.translation?.[language];
 
+  // Extract state information from question number
+  const getStateInfo = () => {
+    if (!question.num || typeof question.num !== 'string') return null;
+    
+    const stateMapping: Record<string, { name: string; color: string }> = {
+      'BW': { name: 'Baden-Württemberg', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-700' },
+      'BY': { name: 'Bayern', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-800 dark:text-indigo-200 border-indigo-200 dark:border-indigo-700' },
+      'BE': { name: 'Berlin', color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200 border-red-200 dark:border-red-700' },
+      'BB': { name: 'Brandenburg', color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-700' },
+      'HB': { name: 'Bremen', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 border-purple-200 dark:border-purple-700' },
+      'HH': { name: 'Hamburg', color: 'bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-200 border-pink-200 dark:border-pink-700' },
+      'HE': { name: 'Hessen', color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-700' },
+      'MV': { name: 'Mecklenburg-Vorpommern', color: 'bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200 border-teal-200 dark:border-teal-700' },
+      'NI': { name: 'Niedersachsen', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-800 dark:text-cyan-200 border-cyan-200 dark:border-cyan-700' },
+      'NW': { name: 'Nordrhein-Westfalen', color: 'bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 border-orange-200 dark:border-orange-700' },
+      'RP': { name: 'Rheinland-Pfalz', color: 'bg-lime-100 dark:bg-lime-900/30 text-lime-800 dark:text-lime-200 border-lime-200 dark:border-lime-700' },
+      'SL': { name: 'Saarland', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200 border-emerald-200 dark:border-emerald-700' },
+      'SN': { name: 'Sachsen', color: 'bg-violet-100 dark:bg-violet-900/30 text-violet-800 dark:text-violet-200 border-violet-200 dark:border-violet-700' },
+      'ST': { name: 'Sachsen-Anhalt', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-200 border-rose-200 dark:border-rose-700' },
+      'SH': { name: 'Schleswig-Holstein', color: 'bg-sky-100 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200 border-sky-200 dark:border-sky-700' },
+      'TH': { name: 'Thüringen', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-200 border-amber-200 dark:border-amber-700' },
+    };
+
+    const stateCode = question.num.split('-')[0];
+    return stateMapping[stateCode] || null;
+  };
+
+  const stateInfo = getStateInfo();
+
   const [shuffledOptions] = useState(() => {
     const options = [
       { key: 'a', text: question.a, isCorrect: question.solution === 'a' },
@@ -394,9 +423,16 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
     <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 p-6 shadow-sm">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-            Question {questionNumber}
-          </h3>
+          <div className="flex items-center gap-3">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+              Question {questionNumber}
+            </h3>
+            {stateInfo && (
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${stateInfo.color}`}>
+                {stateInfo.name}
+              </span>
+            )}
+          </div>
           <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center">
             {isTestMode && showFeedback && question.translation && Object.keys(question.translation).length > 0 && language !== 'de' && (
               <button
