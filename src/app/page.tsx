@@ -296,7 +296,7 @@ export default function Home() {
                 <QuestionCard
                   key={currentQuestion.id}
                   question={currentQuestion}
-                  questionNumber={parseInt(currentQuestion.num)}
+                  questionNumber={parseInt(currentQuestion.num) || parseInt(currentQuestion.num.split('-')[1]) || currentQuestionIndex + 1}
                 />
               </div>
             ) : (
