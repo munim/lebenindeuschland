@@ -101,8 +101,8 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                 Navigation
               </h3>
               <div className="space-y-1">
-                <ShortcutItem keys={['←']} description="Previous question" />
-                <ShortcutItem keys={['→']} description="Next question" />
+                <ShortcutItem keys={['←', 'K']} description="Previous question" />
+                <ShortcutItem keys={['→', 'J']} description="Next question" />
               </div>
             </div>
 

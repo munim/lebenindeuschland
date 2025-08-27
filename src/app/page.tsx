@@ -85,7 +85,7 @@ export default function Home() {
       const isTab = e.key === 'Tab';
       const isShiftTab = e.key === 'Tab' && e.shiftKey;
 
-      if (e.key === 'ArrowLeft' || isShiftTab) {
+      if (e.key === 'ArrowLeft' || e.key === 'k' || isShiftTab) {
         e.preventDefault();
         if (hasPrevious && !loading) {
           goToPrevious();
@@ -93,7 +93,7 @@ export default function Home() {
         return;
       }
 
-      if (e.key === 'ArrowRight' || isTab) {
+      if (e.key === 'ArrowRight' || e.key === 'j' || isTab) {
         e.preventDefault();
         if (hasNext && !loading) {
           goToNext();
