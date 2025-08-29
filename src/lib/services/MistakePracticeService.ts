@@ -193,6 +193,23 @@ export class MistakePracticeService {
     };
   }
   
+  static async removeCorrectlyAnsweredMistakes(questionIds: string[]): Promise<void> {
+    const repository = getTestResultRepository();
+    const allResults = await repository.findAll();
+    
+    // Update each test result to remove the correctly answered questions from mistakes
+    for (const result of allResults) {
+      const updatedMistakes = result.mistakes.filter(mistake => !questionIds.includes(mistake.id));
+      
+      // Only update if there are changes
+      if (updatedMistakes.length !== result.mistakes.length) {
+        await repository.update(result.id, {
+          mistakes: updatedMistakes
+        });
+      }
+    }
+  }
+  
   static generateMistakePracticeSummary(practiceData: MistakePracticeData): string {
     switch (practiceData.practiceType) {
       case 'single-test':

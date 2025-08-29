@@ -223,6 +223,12 @@ export class TestSessionService {
       endTime
     });
 
+    // If this is a mistake practice session, remove correctly answered questions from mistake lists
+    if (session.mistakePracticeData && scoreDetails.correctQuestions.length > 0) {
+      const correctlyAnsweredQuestionIds = scoreDetails.correctQuestions.map(q => q.id);
+      await MistakePracticeService.removeCorrectlyAnsweredMistakes(correctlyAnsweredQuestionIds);
+    }
+
     const testResult: TestResult = {
       id: this.generateResultId(),
       sessionId: session.id,
