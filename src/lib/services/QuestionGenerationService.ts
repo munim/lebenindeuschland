@@ -14,8 +14,7 @@ export interface QuestionSelectionResult {
 
 export class QuestionGenerationService {
   static readonly DEFAULT_TOTAL_QUESTIONS = 33;
-  static readonly MIN_STATE_QUESTIONS = 3;
-  static readonly MAX_STATE_QUESTIONS = 5;
+  static readonly STATE_QUESTIONS_COUNT = 3;
 
   async generateTestQuestions(config: TestConfig, randomSeed?: number): Promise<QuestionSelectionResult> {
     const { stateCode, totalQuestions, language } = config;
@@ -40,13 +39,9 @@ export class QuestionGenerationService {
     const stateQuestions = this.filterStateSpecific(allQuestions.questions, stateCode);
     const generalQuestions = this.filterGeneral(allQuestions.questions, stateCode);
     
-    // Select 3-5 random state questions (instead of all 10)
+    // Select exactly 3 state questions (fixed number, not random)
     const stateQuestionsToSelect = Math.min(
-      this.getRandomNumber(
-        QuestionGenerationService.MIN_STATE_QUESTIONS, 
-        QuestionGenerationService.MAX_STATE_QUESTIONS + 1, 
-        randomSeed
-      ),
+      QuestionGenerationService.STATE_QUESTIONS_COUNT,
       stateQuestions.length
     );
     const selectedStateQuestions = this.randomSample(stateQuestions, stateQuestionsToSelect, randomSeed);
@@ -64,8 +59,12 @@ export class QuestionGenerationService {
       randomSeed
     );
     
-    // Combine and shuffle all questions together
-    const finalQuestions = this.shuffleQuestions([...selectedStateQuestions, ...selectedRemainingQuestions], randomSeed);
+    // Combine all selected questions
+    const allSelectedQuestions = [...selectedStateQuestions, ...selectedRemainingQuestions];
+    
+    // Final step: Completely randomize all 33 questions regardless of category/state origin
+    // Use true randomization (not seeded) to ensure complete mixing
+    const finalQuestions = this.completeRandomShuffle(allSelectedQuestions);
     
     return {
       questions: finalQuestions,
@@ -73,7 +72,7 @@ export class QuestionGenerationService {
         totalAvailable: allQuestions.questions.length,
         stateQuestions: selectedStateQuestions.length,
         generalQuestions: selectedRemainingQuestions.length,
-        categoryDistribution: this.getCategoryDistribution([...selectedStateQuestions, ...selectedRemainingQuestions])
+        categoryDistribution: this.getCategoryDistribution(allSelectedQuestions)
       }
     };
   }
@@ -82,16 +81,19 @@ export class QuestionGenerationService {
     // Fetch all general questions (no state filter)
     const allQuestions = await fetchCompleteQuestions(language);
     
-    // Select balanced questions across categories
+    // Select balanced questions across categories (without shuffling)
     const selectedQuestions = this.balancedSampleByCategory(allQuestions.questions, totalQuestions, randomSeed);
     
+    // Final step: Completely randomize all questions
+    const finalQuestions = this.completeRandomShuffle(selectedQuestions);
+    
     return {
-      questions: selectedQuestions,
+      questions: finalQuestions,
       metadata: {
         totalAvailable: allQuestions.questions.length,
         stateQuestions: 0,
-        generalQuestions: selectedQuestions.length,
-        categoryDistribution: this.getCategoryDistribution(selectedQuestions)
+        generalQuestions: finalQuestions.length,
+        categoryDistribution: this.getCategoryDistribution(finalQuestions)
       }
     };
   }
@@ -141,7 +143,7 @@ export class QuestionGenerationService {
       }
     }
     
-    return this.shuffleQuestions(selected.slice(0, count), randomSeed);
+    return selected.slice(0, count); // Don't shuffle here - let final randomization handle it
   }
 
   private groupByCategory(questions: Question[]): Record<string, Question[]> {
@@ -204,12 +206,20 @@ export class QuestionGenerationService {
     }
   }
 
-  private shuffleQuestions(questions: Question[], randomSeed?: number): Question[] {
-    if (randomSeed !== undefined) {
-      return shuffleArrayWithSeed(questions, randomSeed);
-    } else {
-      return this.randomSample(questions, questions.length);
+  /**
+   * Perform a complete random shuffle using Math.random() to ensure true randomization
+   * This is used for the final question order to break any category-based patterns
+   */
+  private completeRandomShuffle<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    
+    // Fisher-Yates shuffle with Math.random() for true randomization
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
+    
+    return shuffled;
   }
 
   private getCategoryDistribution(questions: Question[]): Record<string, number> {
@@ -267,22 +277,5 @@ export class QuestionGenerationService {
     }
     
     return result;
-  }
-
-  /**
-   * Generate a random number between min (inclusive) and max (exclusive)
-   * Uses seeded random if randomSeed is provided, otherwise uses Math.random()
-   */
-  private getRandomNumber(min: number, max: number, randomSeed?: number): number {
-    if (randomSeed !== undefined) {
-      // Use the same seeded random approach as shuffleArrayWithSeed
-      const seed = (randomSeed + min + max) % 2147483647;
-      const normalizedSeed = seed <= 0 ? seed + 2147483646 : seed;
-      const seedValue = (normalizedSeed * 16807) % 2147483647;
-      const random = (seedValue - 1) / 2147483646;
-      return Math.floor(random * (max - min)) + min;
-    } else {
-      return Math.floor(Math.random() * (max - min)) + min;
-    }
   }
 }

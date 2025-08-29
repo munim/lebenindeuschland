@@ -25,14 +25,47 @@ abstract class BaseLocalStorageRepository<T extends { id: string }> {
     const collection = await this.getCollection();
     const existingIndex = collection.findIndex(item => item.id === entity.id);
     
+    // Optimize storage for TestResult entities
+    const optimizedEntity = this.optimizeForStorage(entity);
+    
     if (existingIndex >= 0) {
-      collection[existingIndex] = entity;
+      collection[existingIndex] = optimizedEntity;
     } else {
-      collection.push(entity);
+      collection.push(optimizedEntity);
     }
     
     await this.saveCollection(collection);
+    return entity; // Return original entity, not optimized one
+  }
+
+  private optimizeForStorage(entity: T): T {
+    // For TestResult entities, optimize question storage
+    if (this.collectionKey === 'test_results' && 'mistakes' in entity && 'correctAnswers' in entity) {
+      const testResult = entity as unknown as TestResult;
+      
+      // Create a lighter version by keeping only essential question data
+      const optimizedResult = {
+        ...testResult,
+        mistakes: testResult.mistakes.map(q => this.createLightQuestion(q)),
+        correctAnswers: testResult.correctAnswers.map(q => this.createLightQuestion(q))
+      };
+      
+      return optimizedResult as unknown as T;
+    }
+    
     return entity;
+  }
+
+  private createLightQuestion(question: Question): Partial<Question> {
+    // Keep only essential question data for storage
+    return {
+      id: question.id,
+      num: question.num,
+      category: question.category,
+      question: question.question?.substring(0, 100) + '...' || '',
+      solution: question.solution,
+      // Don't store: options (a,b,c,d), context, images, translations, full question text
+    };
   }
 
   async update(id: string, entity: Partial<T>): Promise<T> {

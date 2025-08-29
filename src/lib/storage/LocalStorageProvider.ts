@@ -1,4 +1,5 @@
 import { IStorageProvider, StorageOptions, StorageError } from './IStorageProvider';
+import { TestResult, TestSession } from '@/types/question';
 
 export class LocalStorageProvider implements IStorageProvider {
   private readonly prefix: string;
@@ -47,10 +48,32 @@ export class LocalStorageProvider implements IStorageProvider {
   async setItem(key: string, value: string): Promise<void> {
     try {
       const fullKey = this.getFullKey(key);
+      
+      // Check storage usage before saving
+      const storageInfo = this.getStorageInfo();
+      const valueSize = value.length + fullKey.length;
+      
+      // If adding this item would exceed 80% of capacity, try to free space
+      if (storageInfo.used + valueSize > storageInfo.total * 0.8) {
+        await this.freeStorageSpace(valueSize);
+      }
+      
       localStorage.setItem(fullKey, value);
     } catch (error) {
-      this.errorHandler(error as Error, 'setItem');
-      throw new StorageError(`Failed to set item with key: ${key}`, 'setItem', error as Error);
+      // If quota exceeded, try emergency cleanup and retry once
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        try {
+          await this.emergencyCleanup();
+          const fullKey = this.getFullKey(key);
+          localStorage.setItem(fullKey, value);
+        } catch (retryError) {
+          this.errorHandler(retryError as Error, 'setItem (retry after cleanup)');
+          throw new StorageError(`Storage quota exceeded and cleanup failed for key: ${key}`, 'setItem', retryError as Error);
+        }
+      } else {
+        this.errorHandler(error as Error, 'setItem');
+        throw new StorageError(`Failed to set item with key: ${key}`, 'setItem', error as Error);
+      }
     }
   }
 
@@ -134,5 +157,94 @@ export class LocalStorageProvider implements IStorageProvider {
     } catch {
       return { used: 0, available: 0, total: 0 };
     }
+  }
+
+  // Storage cleanup methods
+  private async freeStorageSpace(requiredSpace: number): Promise<void> {
+    console.log('Storage getting full, attempting cleanup...');
+    
+    // Strategy: Remove old test results, keeping only the most recent ones
+    try {
+      await this.cleanupOldTestResults();
+      
+      const storageInfo = this.getStorageInfo();
+      if (storageInfo.available < requiredSpace) {
+        // If still not enough space, do more aggressive cleanup
+        await this.cleanupTestSessions();
+      }
+    } catch (error) {
+      console.error('Error during storage cleanup:', error);
+    }
+  }
+
+  private async emergencyCleanup(): Promise<void> {
+    console.log('Emergency storage cleanup triggered!');
+    
+    try {
+      // Remove all but the 5 most recent test results
+      await this.cleanupOldTestResults(5);
+      
+      // Clear all test sessions except active ones
+      await this.cleanupTestSessions(true);
+      
+      // Clear any other non-essential data
+      const keys = await this.getAllKeys();
+      for (const key of keys) {
+        if (key.includes('cache') || key.includes('temp')) {
+          await this.removeItem(key);
+        }
+      }
+    } catch (error) {
+      console.error('Error during emergency cleanup:', error);
+    }
+  }
+
+  private async cleanupOldTestResults(keepCount: number = 20): Promise<void> {
+    try {
+      const testResults = await this.getObject<TestResult[]>('test_results') || [];
+      
+      if (testResults.length > keepCount) {
+        // Sort by completion date and keep only the most recent
+        testResults.sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime());
+        const trimmedResults = testResults.slice(0, keepCount);
+        
+        await this.setObject('test_results', trimmedResults);
+        console.log(`Cleaned up test results: ${testResults.length} -> ${trimmedResults.length}`);
+      }
+    } catch (error) {
+      console.error('Error cleaning up test results:', error);
+    }
+  }
+
+  private async cleanupTestSessions(aggressive: boolean = false): Promise<void> {
+    try {
+      const testSessions = await this.getObject<TestSession[]>('test_sessions') || [];
+      
+      let filteredSessions;
+      if (aggressive) {
+        // Keep only active sessions
+        filteredSessions = testSessions.filter(session => session.status === 'active');
+      } else {
+        // Keep sessions from last 7 days
+        const weekAgo = new Date();
+        weekAgo.setDate(weekAgo.getDate() - 7);
+        
+        filteredSessions = testSessions.filter(session => 
+          session.status === 'active' || new Date(session.startTime) > weekAgo
+        );
+      }
+      
+      if (filteredSessions.length !== testSessions.length) {
+        await this.setObject('test_sessions', filteredSessions);
+        console.log(`Cleaned up test sessions: ${testSessions.length} -> ${filteredSessions.length}`);
+      }
+    } catch (error) {
+      console.error('Error cleaning up test sessions:', error);
+    }
+  }
+
+  // Public method to manually trigger cleanup
+  async cleanup(): Promise<void> {
+    await this.freeStorageSpace(0);
   }
 }
