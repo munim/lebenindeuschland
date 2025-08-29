@@ -1,7 +1,9 @@
 import { TestSession, TestConfig, TestResult, Question } from '@/types/question';
 import { QuestionGenerationService } from './QuestionGenerationService';
 import { TestScoringService } from './TestScoringService';
+import { MistakePracticeService, MistakePracticeOptions } from './MistakePracticeService';
 import { getTestSessionRepository, getTestResultRepository } from '../repositories/RepositoryFactory';
+import { initializeRandomization, isRandomizationEnabled } from '../randomization';
 
 export type TestSessionStatus = 'setup' | 'active' | 'paused' | 'completed' | 'abandoned';
 
@@ -19,6 +21,39 @@ export class TestSessionService {
     this.questionGenerationService = new QuestionGenerationService();
   }
 
+  async createMistakePracticeSession(options: MistakePracticeOptions): Promise<TestSession> {
+    // Check for existing active session
+    const existingSession = await this.findActiveSession();
+    if (existingSession) {
+      throw new Error('An active test session already exists. Complete or abandon it first.');
+    }
+
+    // Generate mistake practice data
+    const practiceData = await MistakePracticeService.createMistakePracticeSession(options);
+    
+    if (practiceData.questions.length === 0) {
+      throw new Error('No mistake questions available for practice. Complete some tests first.');
+    }
+
+    // Create new session with mistake questions
+    const session: TestSession = {
+      id: this.generateSessionId(),
+      state: practiceData.category || 'mistake-practice',
+      questions: practiceData.questions,
+      answers: {},
+      startTime: new Date(),
+      status: 'active',
+      currentQuestionIndex: 0,
+      mistakePracticeData: practiceData
+    };
+
+    // Save to repository
+    const repository = getTestSessionRepository();
+    await repository.save(session);
+
+    return session;
+  }
+
   async createSession(config: TestConfig): Promise<TestSession> {
     // Validate configuration
     const validation = this.questionGenerationService.validateTestConfiguration(config);
@@ -32,8 +67,18 @@ export class TestSessionService {
       throw new Error('An active test session already exists. Complete or abandon it first.');
     }
 
+    // Get randomization seed if randomization is enabled
+    let randomSeed: number | undefined;
+    if (isRandomizationEnabled()) {
+      try {
+        randomSeed = await initializeRandomization();
+      } catch (error) {
+        console.warn('Failed to initialize randomization, falling back to non-deterministic:', error);
+      }
+    }
+
     // Generate questions for the test
-    const questionResult = await this.questionGenerationService.generateTestQuestions(config);
+    const questionResult = await this.questionGenerationService.generateTestQuestions(config, randomSeed);
 
     // Create new session
     const session: TestSession = {
@@ -180,7 +225,11 @@ export class TestSessionService {
       completedAt: endTime,
       state: session.state,
       timeTaken: Math.floor((endTime.getTime() - (session.startTime instanceof Date ? session.startTime.getTime() : new Date(session.startTime).getTime())) / 1000),
-      categoryBreakdown: scoreDetails.categoryBreakdown
+      categoryBreakdown: scoreDetails.categoryBreakdown,
+      isFullyCompleted: scoreDetails.unansweredQuestions === 0,
+      unansweredQuestions: scoreDetails.unansweredQuestions,
+      testType: session.mistakePracticeData ? 'mistake-practice' : 'normal',
+      sourceTestIds: session.mistakePracticeData?.sourceTestIds
     };
 
     // Save result and update session

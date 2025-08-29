@@ -111,33 +111,43 @@ export const TestResultsView: React.FC<TestResultsViewProps> = ({
     <div className={`container mx-auto px-4 py-8 max-w-6xl ${className}`}>
       {/* Header */}
       <div className="text-center mb-8">
-        <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-lg text-white font-semibold text-lg mb-4 ${
-          testResults.passed 
-            ? 'bg-green-600' 
-            : 'bg-red-600'
-        }`}>
-          {testResults.passed ? (
-            <>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Test Passed!
-            </>
-          ) : (
-            <>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              Test Not Passed
-            </>
-          )}
-        </div>
+        {/* Show different header for practice tests vs normal tests */}
+        {currentSession.mistakePracticeData ? (
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-lg bg-purple-600 text-white font-semibold text-lg mb-4">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Practice Complete!
+          </div>
+        ) : (
+          <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-lg text-white font-semibold text-lg mb-4 ${
+            testResults.passed 
+              ? 'bg-green-600' 
+              : 'bg-red-600'
+          }`}>
+            {testResults.passed ? (
+              <>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Test Passed!
+              </>
+            ) : (
+              <>
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Test Not Passed
+              </>
+            )}
+          </div>
+        )}
         
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
-          Your Test Results
+          {currentSession.mistakePracticeData ? 'Your Practice Results' : 'Your Test Results'}
         </h1>
         <div className="flex items-center justify-center gap-6 text-sm text-gray-600 dark:text-gray-400">
-          <span>📍 {currentSession.state}</span>
+          <span>📍 {currentSession.mistakePracticeData ? 'Practice Session' : currentSession.state}</span>
           {formatTestDuration() && <span>⏱️ {formatTestDuration()}</span>}
           <span>📅 {currentSession.endTime?.toLocaleDateString()}</span>
         </div>
@@ -149,6 +159,7 @@ export const TestResultsView: React.FC<TestResultsViewProps> = ({
         <div className="lg:col-span-2">
           <TestScoreCard 
             testResults={testResults}
+            isPracticeTest={currentSession.mistakePracticeData !== undefined}
           />
         </div>
         

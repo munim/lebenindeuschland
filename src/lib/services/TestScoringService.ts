@@ -18,10 +18,10 @@ export interface TestScoreDetails extends TestScore {
 }
 
 export class TestScoringService {
-  private static readonly PASSING_SCORE = 30; // 30 out of 33 questions
+  private static readonly PASSING_SCORE = 17; // 17 out of 33 questions
 
   static calculateScore(session: TestSession): TestScore {
-    const { questions, answers } = session;
+    const { questions, answers, mistakePracticeData } = session;
     let correct = 0;
     let incorrect = 0;
     let unanswered = 0;
@@ -40,14 +40,17 @@ export class TestScoringService {
     const totalQuestions = questions.length;
     const percentage = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
     
+    // For practice tests, always set passed to false and use 0 as passing threshold
+    const isPracticeTest = mistakePracticeData !== undefined;
+    
     return {
       correctAnswers: correct,
       incorrectAnswers: incorrect,
       unansweredQuestions: unanswered,
       totalQuestions,
       percentage,
-      passed: correct >= this.PASSING_SCORE,
-      passingThreshold: this.PASSING_SCORE
+      passed: isPracticeTest ? false : correct >= this.PASSING_SCORE,
+      passingThreshold: isPracticeTest ? 0 : this.PASSING_SCORE
     };
   }
 
@@ -151,6 +154,18 @@ export class TestScoringService {
   } {
     const currentScore = this.calculateScore(session);
     const questionsRemaining = currentScore.unansweredQuestions;
+    
+    // For practice tests, passing is not applicable
+    if (session.mistakePracticeData !== undefined) {
+      return {
+        currentScore: currentScore.correctAnswers,
+        questionsRemaining,
+        minCorrectNeeded: 0,
+        passingPossible: false,
+        passingProbability: 0
+      };
+    }
+    
     const minCorrectNeeded = Math.max(0, this.PASSING_SCORE - currentScore.correctAnswers);
     const passingPossible = minCorrectNeeded <= questionsRemaining;
     
@@ -229,14 +244,17 @@ export class TestScoringService {
   static generateScoreSummary(session: TestSession): string {
     const score = this.calculateScore(session);
     const details = this.calculateScoreDetails(session);
+    const isPracticeTest = session.mistakePracticeData !== undefined;
     
-    let summary = `Test Results: ${score.correctAnswers}/${score.totalQuestions} (${score.percentage}%)`;
+    let summary = `${isPracticeTest ? 'Practice' : 'Test'} Results: ${score.correctAnswers}/${score.totalQuestions} (${score.percentage}%)`;
     
-    if (score.passed) {
-      summary += ' ✅ PASSED';
-    } else {
-      const needed = this.PASSING_SCORE - score.correctAnswers;
-      summary += ` ❌ FAILED - Need ${needed} more correct answer${needed > 1 ? 's' : ''} to pass`;
+    if (!isPracticeTest) {
+      if (score.passed) {
+        summary += ' ✅ PASSED';
+      } else {
+        const needed = this.PASSING_SCORE - score.correctAnswers;
+        summary += ` ❌ FAILED - Need ${needed} more correct answer${needed > 1 ? 's' : ''} to pass`;
+      }
     }
     
     if (details.timePerQuestion) {

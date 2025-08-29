@@ -1,5 +1,6 @@
 import { Question, TestConfig, Language } from '@/types/question';
 import { fetchCompleteQuestions } from '@/lib/api';
+import { shuffleArrayWithSeed } from '@/lib/randomization';
 
 export interface QuestionSelectionResult {
   questions: Question[];
@@ -15,20 +16,21 @@ export class QuestionGenerationService {
   static readonly DEFAULT_TOTAL_QUESTIONS = 33;
   static readonly STATE_QUESTIONS_COUNT = 10;
 
-  async generateTestQuestions(config: TestConfig): Promise<QuestionSelectionResult> {
+  async generateTestQuestions(config: TestConfig, randomSeed?: number): Promise<QuestionSelectionResult> {
     const { stateCode, totalQuestions, language } = config;
     
     if (stateCode) {
-      return this.generateStateBasedTest(stateCode, language, totalQuestions);
+      return this.generateStateBasedTest(stateCode, language, totalQuestions, randomSeed);
     }
     
-    return this.generateGeneralTest(language, totalQuestions);
+    return this.generateGeneralTest(language, totalQuestions, randomSeed);
   }
 
   private async generateStateBasedTest(
     stateCode: string, 
     language: Language, 
-    totalQuestions: number
+    totalQuestions: number,
+    randomSeed?: number
   ): Promise<QuestionSelectionResult> {
     // Fetch all questions for the state (includes general + state-specific)
     const allQuestions = await fetchCompleteQuestions(language, stateCode);
@@ -42,11 +44,11 @@ export class QuestionGenerationService {
     const generalQuestionsToSelect = totalQuestions - stateQuestionsToSelect;
     
     // Select questions
-    const selectedStateQuestions = this.randomSample(stateQuestions, stateQuestionsToSelect);
-    const selectedGeneralQuestions = this.balancedSampleByCategory(generalQuestions, generalQuestionsToSelect);
+    const selectedStateQuestions = this.randomSample(stateQuestions, stateQuestionsToSelect, randomSeed);
+    const selectedGeneralQuestions = this.balancedSampleByCategory(generalQuestions, generalQuestionsToSelect, randomSeed);
     
     // Combine and shuffle
-    const finalQuestions = this.shuffleQuestions([...selectedStateQuestions, ...selectedGeneralQuestions]);
+    const finalQuestions = this.shuffleQuestions([...selectedStateQuestions, ...selectedGeneralQuestions], randomSeed);
     
     return {
       questions: finalQuestions,
@@ -59,12 +61,12 @@ export class QuestionGenerationService {
     };
   }
 
-  private async generateGeneralTest(language: Language, totalQuestions: number): Promise<QuestionSelectionResult> {
+  private async generateGeneralTest(language: Language, totalQuestions: number, randomSeed?: number): Promise<QuestionSelectionResult> {
     // Fetch all general questions (no state filter)
     const allQuestions = await fetchCompleteQuestions(language);
     
     // Select balanced questions across categories
-    const selectedQuestions = this.balancedSampleByCategory(allQuestions.questions, totalQuestions);
+    const selectedQuestions = this.balancedSampleByCategory(allQuestions.questions, totalQuestions, randomSeed);
     
     return {
       questions: selectedQuestions,
@@ -93,7 +95,7 @@ export class QuestionGenerationService {
     });
   }
 
-  private balancedSampleByCategory(questions: Question[], count: number): Question[] {
+  private balancedSampleByCategory(questions: Question[], count: number, randomSeed?: number): Question[] {
     // Group questions by category
     const categorized = this.groupByCategory(questions);
     
@@ -104,7 +106,7 @@ export class QuestionGenerationService {
     const selected: Question[] = [];
     Object.entries(distribution).forEach(([category, categoryCount]) => {
       const categoryQuestions = categorized[category] || [];
-      const sampled = this.randomSample(categoryQuestions, categoryCount);
+      const sampled = this.randomSample(categoryQuestions, categoryCount, randomSeed);
       selected.push(...sampled);
     });
     
@@ -122,7 +124,7 @@ export class QuestionGenerationService {
       }
     }
     
-    return this.shuffleQuestions(selected.slice(0, count));
+    return this.shuffleQuestions(selected.slice(0, count), randomSeed);
   }
 
   private groupByCategory(questions: Question[]): Record<string, Question[]> {
@@ -167,20 +169,30 @@ export class QuestionGenerationService {
     return distribution;
   }
 
-  private randomSample<T>(array: T[], count: number): T[] {
+  private randomSample<T>(array: T[], count: number, randomSeed?: number): T[] {
     if (count >= array.length) return [...array];
     
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    if (randomSeed !== undefined) {
+      // Use seeded randomization for consistent results
+      const shuffled = shuffleArrayWithSeed(array, randomSeed);
+      return shuffled.slice(0, count);
+    } else {
+      // Fallback to regular randomization
+      const shuffled = [...array];
+      for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      }
+      return shuffled.slice(0, count);
     }
-    
-    return shuffled.slice(0, count);
   }
 
-  private shuffleQuestions(questions: Question[]): Question[] {
-    return this.randomSample(questions, questions.length);
+  private shuffleQuestions(questions: Question[], randomSeed?: number): Question[] {
+    if (randomSeed !== undefined) {
+      return shuffleArrayWithSeed(questions, randomSeed);
+    } else {
+      return this.randomSample(questions, questions.length);
+    }
   }
 
   private getCategoryDistribution(questions: Question[]): Record<string, number> {

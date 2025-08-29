@@ -120,6 +120,7 @@ export interface TestSession {
   endTime?: Date;
   status: 'setup' | 'active' | 'paused' | 'completed' | 'abandoned';
   currentQuestionIndex: number;
+  mistakePracticeData?: MistakePracticeData;
 }
 
 // Test Results
@@ -134,6 +135,10 @@ export interface TestResult {
   state: string;
   timeTaken: number;
   categoryBreakdown: CategoryScore[];
+  isFullyCompleted: boolean; // Track if all questions were answered
+  unansweredQuestions: number; // Number of questions left unanswered
+  testType: 'normal' | 'mistake-practice'; // Track test type
+  sourceTestIds?: string[]; // For mistake practice tests - which tests the mistakes came from
 }
 
 export interface CategoryScore {
@@ -157,6 +162,14 @@ export interface TestAnalytics {
 }
 
 // Mistake Practice
+export interface MistakePracticeData {
+  questions: Question[];
+  sourceTestIds: string[];
+  practiceType: 'single-test' | 'all-mistakes' | 'category-focused';
+  category?: string;
+  totalAvailableMistakes: number;
+}
+
 export interface MistakePracticeSession {
   id: string;
   sourceTestIds: string[];

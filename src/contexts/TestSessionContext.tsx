@@ -2,6 +2,7 @@
 
 import { createContext, useContext, ReactNode, useReducer, useEffect, useCallback } from 'react';
 import { TestSession, TestResult, TestConfig } from '@/types/question';
+import { MistakePracticeOptions } from '@/lib/services/MistakePracticeService';
 
 interface TestSessionState {
   currentSession: TestSession | null;
@@ -13,11 +14,13 @@ interface TestSessionState {
 
 interface TestSessionActions {
   startTest: (config: TestConfig) => Promise<void>;
+  startMistakePractice: (options: MistakePracticeOptions) => Promise<void>;
   submitAnswer: (questionId: string, answer: string) => Promise<void>;
   navigateToQuestion: (index: number) => void;
   pauseTest: () => Promise<void>;
   resumeTest: (sessionId: string) => Promise<void>;
   completeTest: () => Promise<TestResult | null>;
+  abandonSession: () => Promise<void>;
   resetSession: () => void;
   loadUnfinishedSession: () => Promise<TestSession | null>;
 }
@@ -121,6 +124,20 @@ export function TestSessionProvider({ children }: TestSessionProviderProps) {
   useEffect(() => {
     loadUnfinishedSession();
   }, [loadUnfinishedSession]);
+
+  const startMistakePractice = useCallback(async (options: MistakePracticeOptions) => {
+    try {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      
+      const { TestSessionService } = await import('@/lib/services/TestSessionService');
+      const service = new TestSessionService();
+      const session = await service.createMistakePracticeSession(options);
+      
+      dispatch({ type: 'START_SESSION', payload: session });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+    }
+  }, []);
 
   const startTest = useCallback(async (config: TestConfig) => {
     try {
@@ -253,6 +270,19 @@ export function TestSessionProvider({ children }: TestSessionProviderProps) {
     }
   }, [state.currentSession]);
 
+  const abandonSession = useCallback(async () => {
+    if (!state.currentSession) return;
+
+    try {
+      const { TestSessionService } = await import('@/lib/services/TestSessionService');
+      const service = new TestSessionService();
+      await service.abandonSession(state.currentSession.id);
+    } catch (error) {
+      console.error('Failed to abandon session:', error);
+      // Don't throw error to avoid blocking the reset
+    }
+  }, [state.currentSession]);
+
   const resetSession = useCallback(() => {
     dispatch({ type: 'RESET_SESSION' });
   }, []);
@@ -260,11 +290,13 @@ export function TestSessionProvider({ children }: TestSessionProviderProps) {
   const contextValue: TestSessionContextType = {
     ...state,
     startTest,
+    startMistakePractice,
     submitAnswer,
     navigateToQuestion,
     pauseTest,
     resumeTest,
     completeTest,
+    abandonSession,
     resetSession,
     loadUnfinishedSession,
   };

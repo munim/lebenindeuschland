@@ -5,11 +5,13 @@ import { TestScoreDetails } from '@/lib/services/TestScoringService';
 
 interface TestScoreCardProps {
   testResults: TestScoreDetails;
+  isPracticeTest?: boolean;
   className?: string;
 }
 
 export const TestScoreCard: React.FC<TestScoreCardProps> = ({
   testResults,
+  isPracticeTest = false,
   className = ''
 }) => {
   const getScoreColorClass = (passed: boolean) => {
@@ -44,24 +46,33 @@ export const TestScoreCard: React.FC<TestScoreCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-          📊 Test Score
+          📊 {isPracticeTest ? 'Practice Score' : 'Test Score'}
         </h2>
-        <div className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBackgroundClass(testResults.passed)}`}>
-          {testResults.passed ? '✅ PASSED' : '❌ NOT PASSED'}
-        </div>
+        {!isPracticeTest && (
+          <div className={`px-3 py-1 rounded-full text-sm font-semibold ${getScoreBackgroundClass(testResults.passed)}`}>
+            {testResults.passed ? '✅ PASSED' : '❌ NOT PASSED'}
+          </div>
+        )}
+        {isPracticeTest && (
+          <div className="px-3 py-1 rounded-full text-sm font-semibold bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-700 text-purple-600 dark:text-purple-400">
+            🔄 PRACTICE
+          </div>
+        )}
       </div>
 
       {/* Main Score Display */}
       <div className="text-center mb-8">
-        <div className={`text-6xl font-bold ${getScoreColorClass(testResults.passed)} mb-2`}>
+        <div className={`text-6xl font-bold ${isPracticeTest ? 'text-purple-600 dark:text-purple-400' : getScoreColorClass(testResults.passed)} mb-2`}>
           {testResults.correctAnswers}
           <span className="text-2xl text-gray-500 dark:text-gray-400">/{testResults.totalQuestions}</span>
         </div>
-        <div className={`text-xl font-semibold ${getScoreColorClass(testResults.passed)}`}>
+        <div className={`text-xl font-semibold ${isPracticeTest ? 'text-purple-600 dark:text-purple-400' : getScoreColorClass(testResults.passed)}`}>
           {testResults.percentage}%
         </div>
         <div className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-          {testResults.passed 
+          {isPracticeTest 
+            ? `Great practice! You got ${testResults.correctAnswers} out of ${testResults.totalQuestions} questions correct.`
+            : testResults.passed 
             ? `Excellent! You passed with ${testResults.correctAnswers - testResults.passingThreshold} extra correct answers.`
             : `You need ${testResults.passingThreshold - testResults.correctAnswers} more correct answers to pass.`
           }

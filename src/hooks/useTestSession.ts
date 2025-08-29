@@ -1,5 +1,6 @@
 import { useTestSessionContext } from '@/contexts/TestSessionContext';
 import { TestConfig } from '@/types/question';
+import { MistakePracticeOptions } from '@/lib/services/MistakePracticeService';
 
 export function useTestSession() {
   const context = useTestSessionContext();
@@ -11,11 +12,13 @@ export function useTestSession() {
     currentQuestionIndex,
     isSubmitting,
     startTest,
+    startMistakePractice: startMistakePracticeFromContext,
     submitAnswer,
     navigateToQuestion,
     pauseTest,
     resumeTest,
     completeTest,
+    abandonSession,
     resetSession,
     loadUnfinishedSession,
   } = context;
@@ -101,6 +104,10 @@ export function useTestSession() {
     await startTest(config);
   };
 
+  const startMistakePractice = async (options: MistakePracticeOptions) => {
+    await startMistakePracticeFromContext(options);
+  };
+
   return {
     // State
     currentSession,
@@ -120,11 +127,13 @@ export function useTestSession() {
     // Actions
     startTest,
     startTestWithConfig,
+    startMistakePractice,
     submitAnswer: handleSubmitAnswer,
     navigateToQuestion,
     pauseTest,
     resumeTest,
     completeTest,
+    abandonSession,
     resetSession,
     loadUnfinishedSession,
 

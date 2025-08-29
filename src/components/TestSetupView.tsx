@@ -79,7 +79,7 @@ export const TestSetupView: React.FC<TestSetupViewProps> = ({
               </div>
               <div className="flex justify-between">
                 <span>Passing Score:</span>
-                <span className="font-medium text-gray-900 dark:text-gray-100">30/33 correct</span>
+                <span className="font-medium text-gray-900 dark:text-gray-100">17/33 correct</span>
               </div>
               <div className="flex justify-between">
                 <span>Language:</span>

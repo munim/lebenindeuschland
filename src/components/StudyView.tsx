@@ -230,16 +230,27 @@ export const StudyView: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-2">
             Questions and Answers
           </h2>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 mb-3">
             {filters.category || filters.state 
               ? `Filtered questions for the 'Life in Germany' test`
               : `Here you can find all questions and answers for the 'Life in Germany' test`
             }
           </p>
-          <div className="flex items-center justify-center gap-4 mt-2">
-            <p className="text-sm text-gray-500 dark:text-gray-500">
-              Question {currentQuestionIndex + 1} of {totalQuestions}
-            </p>
+          
+          {/* Prominent question counter */}
+          <div className="inline-flex items-center gap-3 px-4 py-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700 rounded-lg mb-2">
+            <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+              Question {currentQuestionIndex + 1}
+            </div>
+            <div className="text-sm text-blue-600 dark:text-blue-400">
+              of
+            </div>
+            <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+              {totalQuestions} total
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-center gap-4">
             {getFilterDisplayText() && (
               <span className="text-xs px-2 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full">
                 {getFilterDisplayText()}
@@ -264,6 +275,40 @@ export const StudyView: React.FC = () => {
                 question={currentQuestion}
                 questionNumber={parseInt(currentQuestion.num) || parseInt(currentQuestion.num.split('-')[1]) || currentQuestionIndex + 1}
               />
+              
+              {/* Navigation controls directly below question */}
+              <div className="mt-6 flex items-center justify-between">
+                <button
+                  onClick={goToPrevious}
+                  disabled={!hasPrevious || loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Previous
+                </button>
+                
+                <div className="text-center">
+                  <div className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-500 mt-1">
+                    Use arrow keys, swipe, or pagination below
+                  </div>
+                </div>
+                
+                <button
+                  onClick={goToNext}
+                  disabled={!hasNext || loading}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg transition-colors disabled:cursor-not-allowed"
+                >
+                  Next
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">

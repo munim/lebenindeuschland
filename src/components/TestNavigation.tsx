@@ -4,10 +4,12 @@ import React, { useState } from 'react';
 import { useTestSession } from '@/hooks/useTestSession';
 import { useTestProgress } from '@/hooks/useTestProgress';
 import { useTestAnswers } from '@/hooks/useTestAnswers';
+import { TestSubmitModal } from './TestSubmitModal';
 
 interface TestNavigationProps {
   onPauseTest?: () => void;
   onCompleteTest?: () => void;
+  onCancelTest?: () => void;
   showCompleteButton?: boolean;
   compact?: boolean;
   className?: string;
@@ -16,6 +18,7 @@ interface TestNavigationProps {
 export const TestNavigation: React.FC<TestNavigationProps> = ({
   onPauseTest,
   onCompleteTest,
+  onCancelTest,
   showCompleteButton = true,
   compact = false,
   className = ''
@@ -41,6 +44,7 @@ export const TestNavigation: React.FC<TestNavigationProps> = ({
 
   const [showQuestionJump, setShowQuestionJump] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [showSubmitModal, setShowSubmitModal] = useState(false);
 
   const unansweredQuestions = getUnansweredQuestions().map((_, index) => 
     index + 1
@@ -57,8 +61,13 @@ export const TestNavigation: React.FC<TestNavigationProps> = ({
   };
 
   const handleComplete = async () => {
+    setShowSubmitModal(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     try {
       setIsCompleting(true);
+      setShowSubmitModal(false);
       const result = await completeTest();
       if (result) {
         onCompleteTest?.();
@@ -204,18 +213,34 @@ export const TestNavigation: React.FC<TestNavigationProps> = ({
           </div>
         )}
 
-        {/* Action Buttons - Only Pause and Complete */}
+        {/* Action Buttons - Pause, Cancel, and Complete */}
         <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-4">
-          <button
-            onClick={handlePause}
-            disabled={isLoading || isCompleting}
-            className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Pause Test
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handlePause}
+              disabled={isLoading || isCompleting}
+              className="flex items-center gap-2 px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Pause Test
+            </button>
+            
+            {onCancelTest && (
+              <button
+                onClick={onCancelTest}
+                disabled={isLoading || isCompleting}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-200 border border-red-300 dark:border-red-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Cancel test and return to dashboard"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Cancel Test
+              </button>
+            )}
+          </div>
 
           {showCompleteButton && (
             <div className="flex items-center gap-3">
@@ -252,5 +277,17 @@ export const TestNavigation: React.FC<TestNavigationProps> = ({
     </div>
   );
 
-  return compact ? renderCompactNavigation() : renderFullNavigation();
+  return (
+    <>
+      {compact ? renderCompactNavigation() : renderFullNavigation()}
+      
+      {/* Test Submit Modal */}
+      <TestSubmitModal
+        isOpen={showSubmitModal}
+        onClose={() => setShowSubmitModal(false)}
+        onConfirmSubmit={handleConfirmSubmit}
+        isSubmitting={isCompleting}
+      />
+    </>
+  );
 };

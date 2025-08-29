@@ -78,7 +78,7 @@ export function useTestProgress() {
     
     // Calculate percentages
     const percentageComplete = totalQuestions > 0 
-      ? Math.round((currentQuestionIndex / totalQuestions) * 100) 
+      ? Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100) 
       : 0;
     const percentageAnswered = totalQuestions > 0 
       ? Math.round((questionsAnswered / totalQuestions) * 100) 

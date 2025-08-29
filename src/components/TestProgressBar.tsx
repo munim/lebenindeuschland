@@ -86,8 +86,9 @@ export const TestProgressBar: React.FC<TestProgressBarProps> = ({
             style={{ width: `${percentageComplete}%` }}
           />
         </div>
-        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
-          {percentageComplete}% complete
+        <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex justify-between">
+          <span>{percentageComplete}% through</span>
+          <span>{percentageAnswered}% answered</span>
         </div>
       </div>
     </div>

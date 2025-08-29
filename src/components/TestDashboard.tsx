@@ -6,9 +6,10 @@ import { useTestResults } from '@/hooks/useTestResults';
 import { TestSetupView } from './TestSetupView';
 import { ActiveTestView } from './ActiveTestView';
 import { TestResultsView } from './TestResultsView';
+import { MistakePracticeSetup } from './MistakePracticeSetup';
 import { TestSession, TestResult } from '@/types/question';
 
-type TestPhase = 'dashboard' | 'setup' | 'active' | 'results';
+type TestPhase = 'dashboard' | 'setup' | 'active' | 'results' | 'mistake-practice';
 
 export const TestDashboard: React.FC = () => {
   const { 
@@ -17,7 +18,8 @@ export const TestDashboard: React.FC = () => {
     error, 
     hasActiveSession, 
     loadUnfinishedSession,
-    resetSession 
+    resetSession,
+    startMistakePractice
   } = useTestSession();
 
   const { testResults, loadTestResults } = useTestResults();
@@ -62,6 +64,22 @@ export const TestDashboard: React.FC = () => {
     setCurrentPhase('setup');
   };
 
+  const handleStartMistakePractice = () => {
+    setCurrentPhase('mistake-practice');
+  };
+
+  const handleStartMistakePracticeFromTest = async (testResult: TestResult) => {
+    try {
+      await startMistakePractice({
+        sourceTestIds: [testResult.id || `${testResult.state}-${testResult.completedAt.toISOString()}`],
+        maxQuestions: 33
+      });
+      setCurrentPhase('active');
+    } catch (error) {
+      console.error('Failed to start mistake practice from test:', error);
+    }
+  };
+
   const handleTestStart = () => {
     setCurrentPhase('active');
   };
@@ -102,11 +120,20 @@ export const TestDashboard: React.FC = () => {
         />
       );
 
+    case 'mistake-practice':
+      return (
+        <MistakePracticeSetup
+          onTestStart={handleTestStart}
+          onCancel={handleCancelSetup}
+        />
+      );
+
     case 'active':
       return (
         <ActiveTestView
           onTestComplete={handleTestComplete}
           onTestPause={handleTestPause}
+          onTestCancel={handleBackToDashboard}
         />
       );
 
@@ -122,6 +149,8 @@ export const TestDashboard: React.FC = () => {
     default:
       return <DashboardView 
         onStartNewTest={handleStartNewTest}
+        onStartMistakePractice={handleStartMistakePractice}
+        onStartMistakePracticeFromTest={handleStartMistakePracticeFromTest}
         testHistory={testResults}
         hasActiveSession={hasActiveSession}
         currentSession={currentSession}
@@ -134,6 +163,8 @@ export const TestDashboard: React.FC = () => {
 
 interface DashboardViewProps {
   onStartNewTest: () => void;
+  onStartMistakePractice: () => void;
+  onStartMistakePracticeFromTest: (testResult: TestResult) => void;
   testHistory: TestResult[];
   hasActiveSession: boolean;
   currentSession: TestSession | null;
@@ -144,6 +175,8 @@ interface DashboardViewProps {
 
 const DashboardView: React.FC<DashboardViewProps> = ({
   onStartNewTest,
+  onStartMistakePractice,
+  onStartMistakePracticeFromTest,
   testHistory,
   hasActiveSession,
   currentSession,
@@ -202,7 +235,7 @@ const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
         {/* Start New Test Card */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -250,6 +283,53 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
         </div>
 
+        {/* Mistake Practice Card */}
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
+            🔄 Mistake Practice
+          </h2>
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <p>• Practice questions you got wrong</p>
+              <p>• Focus on weak knowledge areas</p>
+              <p>• Improve your passing chances</p>
+              <p>• Same test format and scoring</p>
+            </div>
+            
+            <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg p-3">
+              <h3 className="font-medium text-green-800 dark:text-green-200 text-sm mb-1">
+                📚 Practice Options
+              </h3>
+              <ul className="text-xs text-green-700 dark:text-green-300 space-y-0.5">
+                <li>• All your previous mistakes</li>
+                <li>• Mistakes from specific categories</li>
+                <li>• Recent test mistakes only</li>
+                <li>• Appears as &quot;Mistake Practice&quot; in history</li>
+              </ul>
+            </div>
+            
+            <button 
+              onClick={onStartMistakePractice}
+              disabled={isLoading}
+              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-green-400 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center gap-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  Practice Mistakes
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+
         {/* Test History Card */}
         <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -264,17 +344,45 @@ const DashboardView: React.FC<DashboardViewProps> = ({
           ) : (
             <div className="space-y-3">
               {testHistory.map((test, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div>
-                    <div className="font-medium text-gray-900 dark:text-gray-100">
-                      {test.state} Test
+                <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
+                          {test.testType === 'mistake-practice' ? '🔄 ' : ''}{test.state} Test
+                        </div>
+                        {!test.isFullyCompleted && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
+                            Incomplete
+                          </span>
+                        )}
+                        {test.testType === 'mistake-practice' && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                            Mistake Practice
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-600 dark:text-gray-400">
+                        Score: {test.score}/33 • {test.passed ? 'Passed' : 'Failed'}
+                        {!test.isFullyCompleted && ` • ${test.unansweredQuestions} unanswered`}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        {test.completedAt.toLocaleDateString()}
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
-                      Score: {test.score}/33 • {test.passed ? 'Passed' : 'Failed'}
+                    <div className="flex items-center gap-2">
+                      {/* Show Practice Mistakes button only if test has mistakes and isn't already a mistake practice */}
+                      {test.testType !== 'mistake-practice' && test.mistakes && test.mistakes.length > 0 && (
+                        <button
+                          onClick={() => onStartMistakePracticeFromTest(test)}
+                          disabled={isLoading}
+                          className="px-3 py-1.5 text-xs font-medium bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200 rounded-lg transition-colors disabled:opacity-50"
+                          title={`Practice ${test.mistakes.length} mistakes from this test`}
+                        >
+                          🔄 Practice ({test.mistakes.length})
+                        </button>
+                      )}
                     </div>
-                  </div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    {test.completedAt.toLocaleDateString()}
                   </div>
                 </div>
               ))}
