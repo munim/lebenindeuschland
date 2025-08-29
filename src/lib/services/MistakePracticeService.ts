@@ -71,8 +71,14 @@ export class MistakePracticeService {
     const repository = getTestResultRepository();
     const allResults = await repository.findAll();
     
+    // Ensure dates are properly converted from strings to Date objects
+    const processedResults = allResults.map(result => ({
+      ...result,
+      completedAt: new Date(result.completedAt)
+    }));
+    
     // Filter results that have mistakes
-    const resultsWithMistakes = allResults.filter(result => result.mistakes.length > 0);
+    const resultsWithMistakes = processedResults.filter(result => result.mistakes.length > 0);
     
     // Count mistakes by category
     const categoryMistakes = new Map<string, Set<string>>();

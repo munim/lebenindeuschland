@@ -341,51 +341,63 @@ const DashboardView: React.FC<DashboardViewProps> = ({
               <p className="text-lg font-medium mb-2">No tests taken yet</p>
               <p className="text-sm">Take your first test to see your progress here</p>
             </div>
-          ) : (
-            <div className="space-y-3">
-              {testHistory.map((test, index) => (
-                <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <div className="font-medium text-gray-900 dark:text-gray-100">
-                          {test.testType === 'mistake-practice' ? '🔄 ' : ''}{test.state} Test
+           ) : (
+            <div>
+              {/* Display recent 5 tests with scroll */}
+              <div className="max-h-80 overflow-y-auto pr-2 space-y-3">
+                {testHistory
+                  .sort((a, b) => new Date(b.completedAt).getTime() - new Date(a.completedAt).getTime()) // Sort by most recent first
+                  .slice(0, 5) // Take only first 5
+                  .map((test, index) => (
+                  <div key={index} className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <div className="font-medium text-gray-900 dark:text-gray-100">
+                            {test.testType === 'mistake-practice' ? '🔄 ' : ''}{test.state} Test
+                          </div>
+                          {!test.isFullyCompleted && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
+                              Incomplete
+                            </span>
+                          )}
+                          {test.testType === 'mistake-practice' && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
+                              Mistake Practice
+                            </span>
+                          )}
                         </div>
-                        {!test.isFullyCompleted && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200">
-                            Incomplete
-                          </span>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          Score: {test.score}/33 • {test.passed ? 'Passed' : 'Failed'}
+                          {!test.isFullyCompleted && ` • ${test.unansweredQuestions} unanswered`}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                          {test.completedAt.toLocaleDateString()}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {/* Show Practice Mistakes button only if test has mistakes and isn't already a mistake practice */}
+                        {test.testType !== 'mistake-practice' && test.mistakes && test.mistakes.length > 0 && (
+                          <button
+                            onClick={() => onStartMistakePracticeFromTest(test)}
+                            disabled={isLoading}
+                            className="px-3 py-1.5 text-xs font-medium bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200 rounded-lg transition-colors disabled:opacity-50"
+                            title={`Practice ${test.mistakes.length} mistakes from this test`}
+                          >
+                            🔄 Practice ({test.mistakes.length})
+                          </button>
                         )}
-                        {test.testType === 'mistake-practice' && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200">
-                            Mistake Practice
-                          </span>
-                        )}
                       </div>
-                      <div className="text-sm text-gray-600 dark:text-gray-400">
-                        Score: {test.score}/33 • {test.passed ? 'Passed' : 'Failed'}
-                        {!test.isFullyCompleted && ` • ${test.unansweredQuestions} unanswered`}
-                      </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                        {test.completedAt.toLocaleDateString()}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Show Practice Mistakes button only if test has mistakes and isn't already a mistake practice */}
-                      {test.testType !== 'mistake-practice' && test.mistakes && test.mistakes.length > 0 && (
-                        <button
-                          onClick={() => onStartMistakePracticeFromTest(test)}
-                          disabled={isLoading}
-                          className="px-3 py-1.5 text-xs font-medium bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50 text-green-800 dark:text-green-200 rounded-lg transition-colors disabled:opacity-50"
-                          title={`Practice ${test.mistakes.length} mistakes from this test`}
-                        >
-                          🔄 Practice ({test.mistakes.length})
-                        </button>
-                      )}
                     </div>
                   </div>
+                ))}
+              </div>
+              {/* Show indicator if there are more than 5 tests */}
+              {testHistory.length > 5 && (
+                <div className="mt-3 text-center text-sm text-gray-500 dark:text-gray-400">
+                  Showing 5 most recent tests of {testHistory.length} total
                 </div>
-              ))}
+              )}
             </div>
           )}
         </div>

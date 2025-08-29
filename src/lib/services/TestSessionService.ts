@@ -3,7 +3,7 @@ import { QuestionGenerationService } from './QuestionGenerationService';
 import { TestScoringService } from './TestScoringService';
 import { MistakePracticeService, MistakePracticeOptions } from './MistakePracticeService';
 import { getTestSessionRepository, getTestResultRepository } from '../repositories/RepositoryFactory';
-import { initializeRandomization, isRandomizationEnabled } from '../randomization';
+import { initializeRandomization, isRandomizationEnabled, clearSessionRandomizationSeed } from '../randomization';
 
 export type TestSessionStatus = 'setup' | 'active' | 'paused' | 'completed' | 'abandoned';
 
@@ -204,7 +204,15 @@ export class TestSessionService {
       throw new Error(`Session with id ${sessionId} not found`);
     }
 
-    if (session.status !== 'active') {
+    if (session.status === 'completed') {
+      // Session already completed, return existing result
+      const resultRepository = getTestResultRepository();
+      const existingResults = await resultRepository.findBy({ sessionId: session.id } as Partial<TestResult>);
+      if (existingResults.length > 0) {
+        return existingResults[0];
+      }
+      // If no result found but session is completed, fall through to create result
+    } else if (session.status !== 'active') {
       throw new Error(`Cannot complete session with status: ${session.status}`);
     }
 
@@ -237,6 +245,9 @@ export class TestSessionService {
     await resultRepository.save(testResult);
     
     await repository.completeSession(sessionId);
+    
+    // Clear randomization seed so next test gets a different seed
+    clearSessionRandomizationSeed();
 
     return testResult;
   }
@@ -247,6 +258,9 @@ export class TestSessionService {
       status: 'abandoned' as const,
       endTime: new Date()
     });
+    
+    // Clear randomization seed so next test gets a different seed
+    clearSessionRandomizationSeed();
   }
 
   async getSessionProgress(sessionId: string): Promise<SessionProgress> {

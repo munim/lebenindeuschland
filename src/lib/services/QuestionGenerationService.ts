@@ -14,7 +14,8 @@ export interface QuestionSelectionResult {
 
 export class QuestionGenerationService {
   static readonly DEFAULT_TOTAL_QUESTIONS = 33;
-  static readonly STATE_QUESTIONS_COUNT = 10;
+  static readonly MIN_STATE_QUESTIONS = 3;
+  static readonly MAX_STATE_QUESTIONS = 5;
 
   async generateTestQuestions(config: TestConfig, randomSeed?: number): Promise<QuestionSelectionResult> {
     const { stateCode, totalQuestions, language } = config;
@@ -39,24 +40,40 @@ export class QuestionGenerationService {
     const stateQuestions = this.filterStateSpecific(allQuestions.questions, stateCode);
     const generalQuestions = this.filterGeneral(allQuestions.questions, stateCode);
     
-    // Calculate distribution: 10 state + 23 general
-    const stateQuestionsToSelect = Math.min(QuestionGenerationService.STATE_QUESTIONS_COUNT, stateQuestions.length);
-    const generalQuestionsToSelect = totalQuestions - stateQuestionsToSelect;
-    
-    // Select questions
+    // Select 3-5 random state questions (instead of all 10)
+    const stateQuestionsToSelect = Math.min(
+      this.getRandomNumber(
+        QuestionGenerationService.MIN_STATE_QUESTIONS, 
+        QuestionGenerationService.MAX_STATE_QUESTIONS + 1, 
+        randomSeed
+      ),
+      stateQuestions.length
+    );
     const selectedStateQuestions = this.randomSample(stateQuestions, stateQuestionsToSelect, randomSeed);
-    const selectedGeneralQuestions = this.balancedSampleByCategory(generalQuestions, generalQuestionsToSelect, randomSeed);
     
-    // Combine and shuffle
-    const finalQuestions = this.shuffleQuestions([...selectedStateQuestions, ...selectedGeneralQuestions], randomSeed);
+    // Combine all remaining questions (unused state questions + all general questions)
+    // This ensures balanced category distribution across ALL available questions
+    const remainingStateQuestions = stateQuestions.filter(q => !selectedStateQuestions.includes(q));
+    const allRemainingQuestions = [...remainingStateQuestions, ...generalQuestions];
+    
+    // Select remaining questions with balanced category distribution
+    const remainingQuestionsToSelect = totalQuestions - stateQuestionsToSelect;
+    const selectedRemainingQuestions = this.balancedSampleByCategory(
+      allRemainingQuestions, 
+      remainingQuestionsToSelect, 
+      randomSeed
+    );
+    
+    // Combine and shuffle all questions together
+    const finalQuestions = this.shuffleQuestions([...selectedStateQuestions, ...selectedRemainingQuestions], randomSeed);
     
     return {
       questions: finalQuestions,
       metadata: {
         totalAvailable: allQuestions.questions.length,
         stateQuestions: selectedStateQuestions.length,
-        generalQuestions: selectedGeneralQuestions.length,
-        categoryDistribution: this.getCategoryDistribution([...selectedStateQuestions, ...selectedGeneralQuestions])
+        generalQuestions: selectedRemainingQuestions.length,
+        categoryDistribution: this.getCategoryDistribution([...selectedStateQuestions, ...selectedRemainingQuestions])
       }
     };
   }
@@ -250,5 +267,22 @@ export class QuestionGenerationService {
     }
     
     return result;
+  }
+
+  /**
+   * Generate a random number between min (inclusive) and max (exclusive)
+   * Uses seeded random if randomSeed is provided, otherwise uses Math.random()
+   */
+  private getRandomNumber(min: number, max: number, randomSeed?: number): number {
+    if (randomSeed !== undefined) {
+      // Use the same seeded random approach as shuffleArrayWithSeed
+      const seed = (randomSeed + min + max) % 2147483647;
+      const normalizedSeed = seed <= 0 ? seed + 2147483646 : seed;
+      const seedValue = (normalizedSeed * 16807) % 2147483647;
+      const random = (seedValue - 1) / 2147483646;
+      return Math.floor(random * (max - min)) + min;
+    } else {
+      return Math.floor(Math.random() * (max - min)) + min;
+    }
   }
 }

@@ -33,3 +33,29 @@ body {
 .h-safe-area-inset-bottom {
   height: env(safe-area-inset-bottom, 0px);
 }
+
+/* Custom scrollbar styles */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(209, 213, 219);
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(156, 163, 175);
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: rgb(75, 85, 99);
+}
+
+.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: rgb(107, 114, 128);
+}

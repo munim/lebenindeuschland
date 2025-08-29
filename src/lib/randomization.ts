@@ -143,7 +143,8 @@ export function isRandomizationEnabled(): boolean {
   if (typeof window === 'undefined') return false;
   
   const enabled = localStorage.getItem('randomize-questions');
-  return enabled === 'true';
+  // Default to true if never set, otherwise respect the user's choice
+  return enabled === null ? true : enabled === 'true';
 }
 
 /**
