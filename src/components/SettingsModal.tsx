@@ -5,6 +5,8 @@ import { TestModeToggle } from './TestModeToggle';
 import { LanguageSelector } from './LanguageSelector';
 import { ThemeToggle } from './ThemeToggle';
 import { useRandomization } from '@/contexts/RandomizationContext';
+import { useSessionStats } from '@/contexts/SessionStatsContext';
+import { useTestMode } from '@/contexts/TestModeContext';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -13,6 +15,8 @@ interface SettingsModalProps {
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   const { isEnabled: isRandomizationEnabled, toggleRandomization } = useRandomization();
+  const { stats, getAccuracyPercentage, getSessionDuration, resetSession } = useSessionStats();
+  const { isTestMode } = useTestMode();
 
   useEffect(() => {
     if (isOpen) {
@@ -139,6 +143,48 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose })
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
             </label>
           </div>
+          
+          {/* Session Stats (only in test mode) */}
+          {isTestMode && stats.total > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    Session Statistics
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Current test session performance
+                  </p>
+                </div>
+                <button
+                  onClick={resetSession}
+                  className="px-3 py-1 text-sm bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-md hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="text-center p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.correct}</div>
+                  <div className="text-sm text-green-600 dark:text-green-400">Correct</div>
+                </div>
+                <div className="text-center p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
+                  <div className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.incorrect}</div>
+                  <div className="text-sm text-red-600 dark:text-red-400">Incorrect</div>
+                </div>
+              </div>
+              
+              <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                <span>Accuracy: <span className={`font-medium ${
+                  getAccuracyPercentage() >= 80 ? 'text-green-600 dark:text-green-400' : 
+                  getAccuracyPercentage() >= 60 ? 'text-yellow-600 dark:text-yellow-400' : 
+                  'text-red-600 dark:text-red-400'
+                }`}>{getAccuracyPercentage()}%</span></span>
+                <span>Duration: {getSessionDuration()} min</span>
+              </div>
+            </div>
+          )}
         </div>
         
         {/* Safe area for mobile devices */}

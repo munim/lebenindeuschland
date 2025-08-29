@@ -10,6 +10,7 @@ import { RandomizationToggle } from '@/components/RandomizationToggle';
 import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
 import { KeyboardShortcutsModal, KeyboardShortcutsButton } from '@/components/KeyboardShortcutsModal';
 import { CollapsibleFilterBar } from '@/components/CollapsibleFilterBar';
+import { SessionStatsBadge } from '@/components/SessionStatsBadge';
 import { Footer } from '@/components/Footer';
 import { useQuestionCache } from '@/lib/useQuestionCache';
 import { useRandomizedQuestionCache } from '@/lib/useRandomizedQuestionCache';
@@ -226,6 +227,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors flex flex-col">
+      {/* Session Stats Badge */}
+      <SessionStatsBadge />
+      
       <div className="flex-1">
         <div className="container mx-auto px-4 py-8 max-w-4xl">
           <header className="mb-8">

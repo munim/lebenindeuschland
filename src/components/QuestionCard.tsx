@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Question } from '@/types/question';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTestMode } from '@/contexts/TestModeContext';
+import { useSessionStats } from '@/contexts/SessionStatsContext';
 import { InfoToggle } from './InfoToggle';
 
 interface AnswerOptionProps {
@@ -154,6 +155,7 @@ interface QuestionCardProps {
 export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNumber }) => {
   const { language } = useLanguage();
   const { isTestMode } = useTestMode();
+  const { recordAnswer } = useSessionStats();
   const [questionToggled, setQuestionToggled] = useState(false);
   const [answerToggles, setAnswerToggles] = useState<Record<string, boolean>>({});
   const [infoToggled, setInfoToggled] = useState(false);
@@ -320,6 +322,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
       // Test mode: select answer and show feedback
       setSelectedAnswer(optionKey);
       setShowFeedback(true);
+      
+      // Record answer in session stats
+      const isCorrect = question.solution === optionKey;
+      recordAnswer(question.num, isCorrect);
     } else {
       // Study mode: toggle translation
       setAnswerToggles(prev => ({
@@ -327,7 +333,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({ question, questionNu
         [optionKey]: !prev[optionKey]
       }));
     }
-  }, [isTestMode]);
+  }, [isTestMode, question.solution, question.num, recordAnswer]);
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
