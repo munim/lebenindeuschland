@@ -6,6 +6,7 @@ import { TestScoringService, TestScoreDetails } from '@/lib/services/TestScoring
 import { TestScoreCard } from './TestScoreCard';
 import { CategoryBreakdownCard } from './CategoryBreakdownCard';
 import { MistakesSummaryCard } from './MistakesSummaryCard';
+import { MistakesReviewSection } from './MistakesReviewSection';
 import { TestResultActions } from './TestResultActions';
 
 interface TestResultsViewProps {
@@ -175,7 +176,7 @@ export const TestResultsView: React.FC<TestResultsViewProps> = ({
       </div>
 
       {/* Detailed Analysis */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Category Breakdown */}
         <CategoryBreakdownCard 
           categoryBreakdown={testResults.categoryBreakdown}
@@ -189,6 +190,16 @@ export const TestResultsView: React.FC<TestResultsViewProps> = ({
           onReviewMistakes={onReviewMistakes}
         />
       </div>
+
+      {/* Mistakes Review Section */}
+      {testResults.mistakes.length > 0 && (
+        <div className="mb-8">
+          <MistakesReviewSection 
+            mistakes={testResults.mistakes}
+            userAnswers={currentSession.answers}
+          />
+        </div>
+      )}
 
       {/* Performance Insights */}
       {performanceAnalysis && (
