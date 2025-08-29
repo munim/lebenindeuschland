@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { TestModeProvider } from "@/contexts/TestModeContext";
 import { RandomizationProvider } from "@/contexts/RandomizationContext";
 import { SessionStatsProvider } from "@/contexts/SessionStatsContext";
+import { AppModeProvider } from "@/contexts/AppModeContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
@@ -36,13 +37,15 @@ export default function RootLayout({
         <ErrorBoundary>
           <ThemeProvider>
             <LanguageProvider>
-              <TestModeProvider>
-                <SessionStatsProvider>
-                  <RandomizationProvider>
-                    {children}
-                  </RandomizationProvider>
-                </SessionStatsProvider>
-              </TestModeProvider>
+              <AppModeProvider>
+                <TestModeProvider>
+                  <SessionStatsProvider>
+                    <RandomizationProvider>
+                      {children}
+                    </RandomizationProvider>
+                  </SessionStatsProvider>
+                </TestModeProvider>
+              </AppModeProvider>
             </LanguageProvider>
           </ThemeProvider>
         </ErrorBoundary>
