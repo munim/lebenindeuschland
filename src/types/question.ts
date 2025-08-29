@@ -106,3 +106,78 @@ export interface AppConfig {
   supportedLanguages: Language[];
   defaultLanguage: Language;
 }
+
+// Application Mode
+export type AppMode = 'study' | 'test';
+
+// Test Session Types
+export interface TestSession {
+  id: string;
+  state: string;
+  questions: Question[];
+  answers: Record<string, string>;
+  startTime: Date;
+  endTime?: Date;
+  status: 'setup' | 'active' | 'paused' | 'completed' | 'abandoned';
+  currentQuestionIndex: number;
+}
+
+// Test Results
+export interface TestResult {
+  id: string;
+  sessionId: string;
+  score: number;
+  passed: boolean;
+  mistakes: Question[];
+  correctAnswers: Question[];
+  completedAt: Date;
+  state: string;
+  timeTaken: number;
+  categoryBreakdown: CategoryScore[];
+}
+
+export interface CategoryScore {
+  category: string;
+  correct: number;
+  total: number;
+  accuracy: number;
+}
+
+// Test Analytics
+export interface TestAnalytics {
+  totalTests: number;
+  passedTests: number;
+  passRate: number;
+  averageScore: number;
+  bestScore: number;
+  weakestCategories: CategoryScore[];
+  strongestCategories: CategoryScore[];
+  mostMissedQuestions: Question[];
+  improvementTrend: number;
+}
+
+// Mistake Practice
+export interface MistakePracticeSession {
+  id: string;
+  sourceTestIds: string[];
+  questions: Question[];
+  type: 'single-test' | 'all-mistakes' | 'category-focused';
+  category?: string;
+}
+
+// Test Configuration
+export interface TestConfig {
+  stateCode?: string;
+  totalQuestions: 33;
+  language: Language;
+}
+
+// User Preferences
+export interface UserPreferences {
+  id: string;
+  appMode: AppMode;
+  language: Language;
+  theme: string;
+  lastUsed: Date;
+  [key: string]: string | Date | AppMode | Language;
+}
