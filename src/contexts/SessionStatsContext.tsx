@@ -78,7 +78,7 @@ export const SessionStatsProvider: React.FC<SessionStatsProviderProps> = ({ chil
 
   const getSessionDuration = useCallback(() => {
     const now = new Date();
-    const durationMs = now.getTime() - stats.startTime.getTime();
+    const durationMs = now.getTime() - (stats.startTime instanceof Date ? stats.startTime.getTime() : new Date(stats.startTime).getTime());
     return Math.floor(durationMs / (1000 * 60)); // Convert to minutes
   }, [stats.startTime]);
 

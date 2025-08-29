@@ -179,7 +179,7 @@ export class TestSessionService {
       correctAnswers: scoreDetails.correctQuestions,
       completedAt: endTime,
       state: session.state,
-      timeTaken: Math.floor((endTime.getTime() - session.startTime.getTime()) / 1000),
+      timeTaken: Math.floor((endTime.getTime() - (session.startTime instanceof Date ? session.startTime.getTime() : new Date(session.startTime).getTime())) / 1000),
       categoryBreakdown: scoreDetails.categoryBreakdown
     };
 
@@ -300,7 +300,7 @@ export class TestSessionService {
 
     // Check if minimum time has passed (prevent instant submissions)
     const minimumTimeSeconds = 60; // At least 1 minute
-    const elapsedSeconds = Math.floor((new Date().getTime() - session.startTime.getTime()) / 1000);
+    const elapsedSeconds = Math.floor((new Date().getTime() - (session.startTime instanceof Date ? session.startTime.getTime() : new Date(session.startTime).getTime())) / 1000);
     
     if (elapsedSeconds < minimumTimeSeconds) {
       warnings.push('Test completed very quickly - please review your answers');

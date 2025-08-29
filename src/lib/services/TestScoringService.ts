@@ -75,7 +75,7 @@ export class TestScoringService {
     // Calculate average time per question
     let timePerQuestion: number | undefined;
     if (startTime && endTime) {
-      const totalTimeSeconds = Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+      const totalTimeSeconds = Math.floor((endTime.getTime() - (startTime instanceof Date ? startTime.getTime() : new Date(startTime).getTime())) / 1000);
       timePerQuestion = Math.round(totalTimeSeconds / questions.length);
     }
     

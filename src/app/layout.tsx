@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { TestSessionProvider } from "@/contexts/TestSessionContext";
 import { TestModeProvider } from "@/contexts/TestModeContext";
 import { RandomizationProvider } from "@/contexts/RandomizationContext";
 import { SessionStatsProvider } from "@/contexts/SessionStatsContext";
@@ -41,7 +42,9 @@ export default function RootLayout({
                 <TestModeProvider>
                   <SessionStatsProvider>
                     <RandomizationProvider>
-                      {children}
+                      <TestSessionProvider>
+                        {children}
+                      </TestSessionProvider>
                     </RandomizationProvider>
                   </SessionStatsProvider>
                 </TestModeProvider>
