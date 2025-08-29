@@ -14,7 +14,10 @@ This document describes the reusable UI components within the codebase. These co
     - `LanguageSelector.tsx`
     - `Pagination.tsx`
     - `QuestionCard.tsx`
-    - `SettingsModal.tsx`
+    - `QuestionCardSkeleton.tsx`
+    - `RandomizationToggle.tsx`
+    - `SessionStatsBadge.tsx`
+    - `SettingsBar.tsx`
     - `StateSelector.tsx`
     - `TestModeToggle.tsx`
     - `ThemeToggle.tsx`
@@ -23,8 +26,10 @@ This document describes the reusable UI components within the codebase. These co
 Each file in `src/components/` represents a distinct UI component with its own specific functionality. For example:
 - `CategorySelector.tsx`: Allows users to select categories.
 - `QuestionCard.tsx`: Displays a single question.
-- `SettingsModal.tsx`: Provides a modal for application settings.
+- `SettingsBar.tsx`: Provides a unified, responsive settings interface that works across all devices.
 - `ThemeToggle.tsx`: Toggles between different themes.
+- `SessionStatsBadge.tsx`: Shows real-time session statistics in test mode.
+- `RandomizationToggle.tsx`: Controls question randomization.
 
 ## LLM Enhancement Opportunities
 - **New Component Generation:** LLMs can generate new React components based on descriptions or wireframes, including their JSX structure, styling, and basic logic.

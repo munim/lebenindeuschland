@@ -3,12 +3,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { QuestionCard } from '@/components/QuestionCard';
 import { QuestionCardSkeleton } from '@/components/QuestionCardSkeleton';
-import { LanguageSelector } from '@/components/LanguageSelector';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { TestModeToggle } from '@/components/TestModeToggle';
-import { RandomizationToggle } from '@/components/RandomizationToggle';
-import { SettingsModal, SettingsButton } from '@/components/SettingsModal';
-import { KeyboardShortcutsModal, KeyboardShortcutsButton } from '@/components/KeyboardShortcutsModal';
+import { SettingsBar } from '@/components/SettingsBar';
+import { KeyboardShortcutsModal } from '@/components/KeyboardShortcutsModal';
 import { CollapsibleFilterBar } from '@/components/CollapsibleFilterBar';
 import { SessionStatsBadge } from '@/components/SessionStatsBadge';
 import { Footer } from '@/components/Footer';
@@ -19,7 +15,6 @@ import { useSwipe } from '@/lib/useSwipe';
 import { Pagination } from '@/components/Pagination';
 
 export default function Home() {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isKeyboardShortcutsOpen, setIsKeyboardShortcutsOpen] = useState(false);
   const { isEnabled: isRandomizationEnabled } = useRandomization();
   
@@ -143,31 +138,22 @@ export default function Home() {
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                   Leben In Deutschland
                 </h1>
-                
-                {/* Desktop Controls */}
-                <div className="hidden md:flex items-center space-x-4">
-                  <TestModeToggle />
-                  <RandomizationToggle />
-                  <LanguageSelector />
-                  <ThemeToggle />
-                  <KeyboardShortcutsButton onClickAction={() => setIsKeyboardShortcutsOpen(true)} />
-                </div>
-                
-                {/* Mobile Settings Button */}
-                <div className="md:hidden">
-                  <SettingsButton onClickAction={() => setIsSettingsOpen(true)} />
-                </div>
               </div>
               
+              {/* Unified Settings Bar */}
+              <SettingsBar onKeyboardShortcutsOpen={() => setIsKeyboardShortcutsOpen(true)} />
+              
               {/* Filter Controls */}
-              <CollapsibleFilterBar
-                selectedCategory={filters.category}
-                selectedState={filters.state}
-                onCategoryChange={handleCategoryChange}
-                onStateChange={handleStateChange}
-                onResetFilters={handleResetFilters}
-                disabled={loading}
-              />
+              <div className="mt-4">
+                <CollapsibleFilterBar
+                  selectedCategory={filters.category}
+                  selectedState={filters.state}
+                  onCategoryChange={handleCategoryChange}
+                  onStateChange={handleStateChange}
+                  onResetFilters={handleResetFilters}
+                  disabled={loading}
+                />
+              </div>
             </header>
 
             <div className="mb-8 text-center">
@@ -237,31 +223,22 @@ export default function Home() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Leben In Deutschland
               </h1>
-              
-              {/* Desktop Controls */}
-              <div className="hidden md:flex items-center space-x-4">
-                <TestModeToggle />
-                <RandomizationToggle />
-                <LanguageSelector />
-                <ThemeToggle />
-                <KeyboardShortcutsButton onClickAction={() => setIsKeyboardShortcutsOpen(true)} />
-              </div>
-              
-              {/* Mobile Settings Button */}
-              <div className="md:hidden">
-                <SettingsButton onClickAction={() => setIsSettingsOpen(true)} />
-              </div>
             </div>
             
+            {/* Unified Settings Bar */}
+            <SettingsBar onKeyboardShortcutsOpen={() => setIsKeyboardShortcutsOpen(true)} />
+            
             {/* Filter Controls */}
-            <CollapsibleFilterBar
-              selectedCategory={filters.category}
-              selectedState={filters.state}
-              onCategoryChange={handleCategoryChange}
-              onStateChange={handleStateChange}
-              onResetFilters={handleResetFilters}
-              disabled={loading}
-            />
+            <div className="mt-4">
+              <CollapsibleFilterBar
+                selectedCategory={filters.category}
+                selectedState={filters.state}
+                onCategoryChange={handleCategoryChange}
+                onStateChange={handleStateChange}
+                onResetFilters={handleResetFilters}
+                disabled={loading}
+              />
+            </div>
           </header>
 
           <div className="mb-8 text-center">
@@ -339,12 +316,6 @@ export default function Home() {
         </div>
       </div>
       <Footer />
-      
-      {/* Settings Modal */}
-      <SettingsModal 
-        isOpen={isSettingsOpen} 
-        onClose={() => setIsSettingsOpen(false)} 
-      />
       
       {/* Keyboard Shortcuts Modal */}
       <KeyboardShortcutsModal 
